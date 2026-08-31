@@ -1,7 +1,7 @@
 "use client";
 
 import { useUI } from "./providers";
-import { TubeGlow } from "./props";
+import { MiniCabinet, TubeGlow } from "./props";
 import { Globe, External } from "./icons";
 import { links, site, chain } from "@/lib/config";
 import { localeNames, locales } from "@/lib/i18n";
@@ -124,8 +124,7 @@ export function Footer() {
 
           <div className="flex flex-col items-center gap-1">
             <TubeGlow className="w-[200px]" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/lockup.png" alt="" width={150} height={150} className="mt-2 h-auto w-[130px] opacity-90" />
+            <MiniCabinet className="mt-2 h-[170px] w-auto" />
           </div>
         </div>
 

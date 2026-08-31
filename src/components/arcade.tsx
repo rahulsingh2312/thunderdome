@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { channels } from "@/lib/models";
+import { initSfx, sfx } from "@/lib/sfx";
 
 /**
  * The arcade: a dark back room, one fluorescent tube, six cabinets in a row,
@@ -248,6 +249,49 @@ function graffitiTexture(text: string, color: string): THREE.CanvasTexture {
   return t;
 }
 
+/** Big two-tone burner piece: chunky outlined letters, spray specks. */
+function burnerTexture(text: string, c1: string, c2: string): THREE.CanvasTexture {
+  const c = document.createElement("canvas");
+  c.width = 512;
+  c.height = 256;
+  const g = c.getContext("2d")!;
+  g.translate(256, 140);
+  g.rotate(-0.06);
+  g.font = "italic 900 96px 'Arial Black', 'Chakra Petch', sans-serif";
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  g.lineJoin = "round";
+  g.strokeStyle = "#10131a";
+  g.lineWidth = 22;
+  g.strokeText(text, 0, 0);
+  g.strokeStyle = "#f2f6f0";
+  g.lineWidth = 9;
+  g.strokeText(text, 0, 0);
+  const grad = g.createLinearGradient(0, -60, 0, 60);
+  grad.addColorStop(0, c1);
+  grad.addColorStop(1, c2);
+  g.fillStyle = grad;
+  g.fillText(text, 0, 0);
+  // Spray drift and drips.
+  g.globalAlpha = 0.5;
+  for (let i = 0; i < 40; i++) {
+    g.fillStyle = i % 2 ? c1 : c2;
+    g.beginPath();
+    g.arc((Math.random() - 0.5) * 460, (Math.random() - 0.5) * 200, 1 + Math.random() * 3, 0, Math.PI * 2);
+    g.fill();
+  }
+  g.globalAlpha = 0.65;
+  g.fillStyle = c2;
+  for (let i = 0; i < 5; i++) {
+    const dx = (Math.random() - 0.5) * 300;
+    g.fillRect(dx, 40 + Math.random() * 20, 3, 24 + Math.random() * 30);
+  }
+  g.globalAlpha = 1;
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
 function radialGlowTexture(): THREE.CanvasTexture {
   const c = document.createElement("canvas");
   c.width = c.height = 128;
@@ -447,19 +491,53 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       drawMarquee(false);
       const mTex = new THREE.CanvasTexture(mCanvas);
       mTex.colorSpace = THREE.SRGBColorSpace;
-      const marqueeBox = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.52, 1.15), bodyMats[i]);
-      marqueeBox.position.set(0, 4.35, 0);
-      group.add(marqueeBox);
-      const marquee = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.74, 0.4),
-        new THREE.MeshBasicMaterial({ map: mTex }),
-      );
-      marquee.position.set(0, 4.35, 0.59);
-      group.add(marquee);
+      const nailMat = new THREE.MeshStandardMaterial({ color: 0x39413c, roughness: 0.4 });
       if (marqueeStyle === 2) {
-        marqueeBox.rotation.z = 0.045;
-        marquee.rotation.z = 0.045;
-        marquee.position.y = 4.33;
+        // Hanging off its last nail, swung down to one side, lights long dead.
+        const pivot = new THREE.Group();
+        pivot.position.set(-0.86, 4.58, 0);
+        pivot.rotation.z = -0.3;
+        const box = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.52, 1.15), bodyMats[i]);
+        box.position.set(0.86, -0.2, 0);
+        pivot.add(box);
+        const plate = new THREE.Mesh(new THREE.PlaneGeometry(1.74, 0.4), new THREE.MeshBasicMaterial({ map: mTex }));
+        plate.position.set(0.86, -0.2, 0.59);
+        pivot.add(plate);
+        const nail = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.1, 8), nailMat);
+        nail.rotation.x = Math.PI / 2;
+        pivot.add(nail);
+        group.add(pivot);
+      } else if (marqueeStyle === 3) {
+        // Snapped through the middle; both halves droop from their outer nails.
+        for (const side of [-1, 1] as const) {
+          const pivot = new THREE.Group();
+          pivot.position.set(0.9 * side, 4.52, 0);
+          pivot.rotation.z = 0.26 * side;
+          const box = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.52, 1.15), bodyMats[i]);
+          box.position.set(-0.46 * side, -0.08, 0);
+          pivot.add(box);
+          const half = mTex.clone();
+          half.repeat.set(0.5, 1);
+          half.offset.set(side === -1 ? 0 : 0.5, 0);
+          half.needsUpdate = true;
+          const plate = new THREE.Mesh(new THREE.PlaneGeometry(0.84, 0.4), new THREE.MeshBasicMaterial({ map: half }));
+          plate.position.set(-0.46 * side, -0.08, 0.59);
+          pivot.add(plate);
+          const nail = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.1, 8), nailMat);
+          nail.rotation.x = Math.PI / 2;
+          pivot.add(nail);
+          group.add(pivot);
+        }
+      } else {
+        const marqueeBox = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.52, 1.15), bodyMats[i]);
+        marqueeBox.position.set(0, 4.35, 0);
+        group.add(marqueeBox);
+        const marquee = new THREE.Mesh(
+          new THREE.PlaneGeometry(1.74, 0.4),
+          new THREE.MeshBasicMaterial({ map: mTex }),
+        );
+        marquee.position.set(0, 4.35, 0.59);
+        group.add(marquee);
       }
       group.userData.drawMarquee = drawMarquee;
       group.userData.mTex = mTex;
@@ -640,6 +718,34 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
         front.position.set((Math.random() - 0.5) * 0.5, 0.85 + Math.random() * 0.35, 0.667);
         front.rotation.z = (Math.random() - 0.5) * 0.55;
         group.add(front);
+      }
+
+      // Burner pieces, subway-car scale, splashed across sides and skirts.
+      if (i !== 3) {
+        const BURN: [string, string, string][] = [
+          ["REKT", "#ff5ca8", "#ffd23d"],
+          ["PUMP", "#35e0ff", "#3dff8c"],
+          ["APED", "#a06bff", "#ff8a3d"],
+        ];
+        const [bt, b1, b2] = BURN[i % BURN.length];
+        const side = i % 2 === 0 ? 1 : -1;
+        const piece = new THREE.Mesh(
+          new THREE.PlaneGeometry(1.9, 0.95),
+          new THREE.MeshStandardMaterial({ map: burnerTexture(bt, b1, b2), transparent: true, opacity: 0.92, roughness: 0.9 }),
+        );
+        piece.position.set(0.957 * side, 2.4 + (i % 2) * 0.5, 0.05);
+        piece.rotation.y = (Math.PI / 2) * side;
+        piece.rotation.z = (Math.random() - 0.5) * 0.12;
+        group.add(piece);
+      }
+      if (i === 1) {
+        const skirt = new THREE.Mesh(
+          new THREE.PlaneGeometry(1.5, 0.75),
+          new THREE.MeshStandardMaterial({ map: burnerTexture("GG", "#3dff8c", "#35e0ff"), transparent: true, opacity: 0.85, roughness: 0.9 }),
+        );
+        skirt.position.set(0.05, 0.55, 0.667);
+        skirt.rotation.z = -0.05;
+        group.add(skirt);
       }
 
       // A cable torn out of the flank, hanging by its copper; it still spits.
@@ -1078,19 +1184,26 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       return null;
     }
 
-    const onMove = (e: PointerEvent) => {
+    const aimNdc = (clientX: number, clientY: number) => {
       const rect = renderer.domElement.getBoundingClientRect();
       ndc.set(
-        ((e.clientX - rect.left) / rect.width) * 2 - 1,
-        -(((e.clientY - rect.top) / rect.height) * 2 - 1),
+        ((clientX - rect.left) / rect.width) * 2 - 1,
+        -(((clientY - rect.top) / rect.height) * 2 - 1),
       );
     };
-    const onClick = () => {
+    const onMove = (e: PointerEvent) => aimNdc(e.clientX, e.clientY);
+    const onClick = (e: MouseEvent) => {
+      // Touch taps carry no prior pointermove, so aim from the tap itself.
+      aimNdc(e.clientX, e.clientY);
       const hit = pick();
       if (hit != null) onSelectRef.current(hit);
       else if (selectedRef.current != null) onSelectRef.current(null);
     };
-    const onDown = () => (pointerHeld = true);
+    const onDown = (e: PointerEvent) => {
+      pointerHeld = true;
+      aimNdc(e.clientX, e.clientY);
+      initSfx();
+    };
     const onUp = () => (pointerHeld = false);
     renderer.domElement.addEventListener("pointermove", onMove, { passive: true });
     renderer.domElement.addEventListener("click", onClick);
@@ -1145,6 +1258,7 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       {
         const cyc = t % 4.7;
         const bursting = cyc < 0.55;
+        if (bursting && cyc < 0.1) sfx.crackle();
         sparkMat.opacity = bursting ? 0.95 : Math.max(0, 0.95 - (cyc - 0.55) * 2.4);
         for (let i = 0; i < SPARK_N; i++) {
           if (bursting && cyc < 0.08) {
@@ -1168,6 +1282,7 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       const mCyc = t % 5.3;
       const redEvent = !reduced && t > 3.4 && mCyc > 4.05 && mCyc < 4.85;
       const redOn = redEvent && Math.sin(t * 27) > -0.35;
+      if (redOn) sfx.buzz();
       const eff = redOn ? 0.02 : flick;
       tubeLight.intensity = eff * 85;
       tubeMat.opacity = 0.15 + eff * 0.85;
@@ -1180,6 +1295,7 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
 
       const hit = onscreen ? pick() : null;
       if (hit !== hoverIdx) {
+        if (hit != null) sfx.hover();
         hoverIdx = hit;
         renderer.domElement.style.cursor = hit != null ? "pointer" : "default";
         cabs.forEach((c, i) => (c.hovered = i === hit));
@@ -1188,9 +1304,12 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       cabs.forEach((cab, i) => {
         if (!cab.powered && t >= cab.powerAt) {
           cab.powered = true;
-          cab.marqueeLit = true;
-          (cab.group.userData.drawMarquee as (lit: boolean) => void)(true);
-          (cab.group.userData.mTex as THREE.CanvasTexture).needsUpdate = true;
+          sfx.powerOn(i);
+          if ((cab.group.userData.marqueeStyle as number) < 2) {
+            cab.marqueeLit = true;
+            (cab.group.userData.drawMarquee as (lit: boolean) => void)(true);
+            (cab.group.userData.mTex as THREE.CanvasTexture).needsUpdate = true;
+          }
         }
         const sel = selectedRef.current === i;
         const target = cab.powered ? (cab.hovered || sel ? 6.5 : 3.2) : 0;
@@ -1206,9 +1325,9 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
         const hotness = cab.hovered || sel ? 1 : 0.62;
         const rattling = performance.now() / 1000 < cab.glitchUntil;
         const baseX = (i - (roster.length - 1) / 2) * SPACING;
-        cab.group.position.x = baseX + (rattling ? (Math.random() - 0.5) * 0.08 : 0);
-        cab.group.rotation.z = rattling ? (Math.random() - 0.5) * 0.015 : 0;
-        cab.group.rotation.y = (TILT[i] ?? 0) + (rattling ? (Math.random() - 0.5) * 0.03 : 0);
+        cab.group.position.x = baseX + (rattling ? (Math.random() - 0.5) * 0.03 : 0);
+        cab.group.rotation.z = rattling ? (Math.random() - 0.5) * 0.006 : 0;
+        cab.group.rotation.y = (TILT[i] ?? 0) + (rattling ? (Math.random() - 0.5) * 0.012 : 0);
         for (const m of cab.edgeMats) m.opacity = 0.9 * on * flickN * hotness * (rattling && Math.random() < 0.4 ? 0.25 : 1);
         cab.heatMat.opacity = 0.16 * on * flickN * (cab.hovered || sel ? 1.6 : 1);
 
@@ -1272,7 +1391,8 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       // Poked corners shake the whole camera, not just the cabinet.
       const anyRattle = !reduced && cabs.some((c) => performance.now() / 1000 < c.glitchUntil);
       if (anyRattle) {
-        const amp = pointerHeld ? 1 : 0.3;
+        if (pointerHeld) sfx.quake();
+        const amp = pointerHeld ? 0.4 : 0.1;
         camera.position.x += (Math.random() - 0.5) * 0.07 * amp;
         camera.position.y += (Math.random() - 0.5) * 0.06 * amp;
         camera.rotation.z += (Math.random() - 0.5) * 0.008 * amp;

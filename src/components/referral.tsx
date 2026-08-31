@@ -5,6 +5,7 @@ import { useUI } from "./providers";
 import { Check, Lamp } from "./icons";
 import { site, points } from "@/lib/config";
 import { integer } from "@/lib/format";
+import { sfx } from "@/lib/sfx";
 
 type Me = { code: string; points: number; refs: number; lastClaim: number | null; referredBy: string | null };
 type BoardRow = { code: string; points: number; refs: number; paper?: boolean };
@@ -142,6 +143,7 @@ export function Referral() {
       if (res.ok) {
         const j = (await res.json()) as { user: Me };
         setMe(j.user);
+        sfx.coins();
         loadBoard();
       }
     } catch {}

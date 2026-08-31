@@ -18,6 +18,7 @@ import { Board } from "./board";
 import { CandleChart, type Candle } from "./candles";
 import { useLiveMids } from "./use-live-mids";
 import { buildSim, pickReason, type SimFill } from "@/lib/sim";
+import { sfx } from "@/lib/sfx";
 import { universe, type Symbol_ } from "@/lib/config";
 
 /** Inline SOL mark for amounts: the real logo, not a glyph. */
@@ -314,6 +315,7 @@ export function Stage({ initial }: { initial: ArenaView }) {
       }
       if (!credited) throw new Error(t("wallet.failed"));
       await refreshBacking();
+      sfx.coins();
       setPhase({ step: "done", tx: sig });
     } catch (err) {
       setPhase({
@@ -334,6 +336,8 @@ export function Stage({ initial }: { initial: ArenaView }) {
         screens={screens}
         selected={selected}
         onSelect={(i) => {
+          if (i != null) sfx.select();
+          else sfx.close();
           setSelected(i);
           setPhase({ step: "idle" });
         }}
@@ -372,11 +376,15 @@ export function Stage({ initial }: { initial: ArenaView }) {
 
       {agent && (
         <aside
-          className="card animate-rise absolute bottom-3 left-3 right-3 z-[90] max-h-[calc(100%-24px)] overflow-y-auto p-5 sm:bottom-auto sm:left-auto sm:right-6 sm:top-1/2 sm:w-[360px] sm:-translate-y-1/2"
+          className="card animate-rise absolute bottom-0 left-0 right-0 z-[90] max-h-[70%] overflow-y-auto rounded-t-[14px] p-4 pb-7 sm:bottom-auto sm:left-auto sm:right-6 sm:top-1/2 sm:max-h-[calc(100%-24px)] sm:w-[360px] sm:-translate-y-1/2 sm:rounded-none sm:p-5"
           role="dialog"
           aria-label={agent.label}
         >
-          <div className="flex items-start justify-between gap-3">
+          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[var(--rule)] sm:hidden" aria-hidden />
+          <div
+            className="sticky -top-4 z-10 -mx-4 flex items-start justify-between gap-3 px-4 pb-2 pt-1 sm:static sm:mx-0 sm:px-0 sm:pb-0 sm:pt-0"
+            style={{ background: "var(--panel)" }}
+          >
             <div>
               <div className="flex items-center gap-2.5">
                 <span
@@ -391,8 +399,11 @@ export function Stage({ initial }: { initial: ArenaView }) {
               <p className="mt-0.5 text-[12px] text-ink-3">{agent.maker}</p>
             </div>
             <button
-              onClick={() => setSelected(null)}
-              className="label min-h-[40px] min-w-[44px] rounded-[3px] border px-2 text-[11px] text-ink-2 hover:text-ink"
+              onClick={() => {
+                sfx.close();
+                setSelected(null);
+              }}
+              className="label min-h-[44px] min-w-[56px] rounded-[3px] border px-3 text-[12px] text-ink-2 hover:text-ink"
               style={{ borderColor: "var(--rule)" }}
             >
               {t("agent.close")}

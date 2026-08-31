@@ -6,7 +6,7 @@ import { External, Lamp } from "./icons";
 import { chain, treasury } from "@/lib/config";
 import { integer } from "@/lib/format";
 import type { ChainState } from "@/lib/chain";
-import { MiniCabinet, TubeGlow } from "./props";
+import { TubeGlow } from "./props";
 
 const WALL: string[] = ["aave", "ada", "algo", "atom", "avax", "bat", "bch", "bnb", "btc", "chz", "comp", "crv", "dash", "doge", "dot", "enj", "etc", "eth", "fil", "grt", "icp", "knc", "link", "ltc", "mana", "matic", "mkr", "neo", "omg", "qtum", "sand", "snx", "sushi", "theta", "trx", "uni", "usdc", "usdt", "vet", "xlm", "xrp", "zec", "zrx"];
 
@@ -34,11 +34,10 @@ export function ChainSection() {
         }
       } catch {}
     };
+    // One anchor read per visit; everything after is predicted locally.
     read();
-    const id = setInterval(read, 30_000);
     return () => {
       alive = false;
-      clearInterval(id);
     };
   }, []);
 
@@ -74,10 +73,9 @@ export function ChainSection() {
             <External size={14} />
           </a>
 
-          {/* One of ours, parked under the bad wiring. */}
-          <div className="mt-8 hidden flex-col items-center sm:flex sm:w-[220px]">
+          {/* Just the bad wiring down here. */}
+          <div className="mt-10 hidden flex-col items-center sm:flex sm:w-[220px]">
             <TubeGlow tint="red" className="w-[190px]" />
-            <MiniCabinet className="mt-3 h-[190px] w-auto" />
           </div>
         </div>
 
