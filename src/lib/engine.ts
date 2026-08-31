@@ -260,6 +260,7 @@ export async function readArena() {
       label: c.label,
       maker: c.maker,
       ch: c.ch,
+      logo: c.logo,
       equity,
       pnl: equity - launch.startingCapital,
       ret: equity / launch.startingCapital - 1,

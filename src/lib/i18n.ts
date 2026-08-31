@@ -76,6 +76,22 @@ const en = {
   "ref.copied": "Copied",
   "ref.invited": "Invited by",
 
+  "chain.h": "Powered by Robinhood Chain",
+  "chain.b1":
+    "Robinhood Arena runs on Robinhood Chain, the Arbitrum Orbit L2 built by Robinhood. Chain ID 4663, ETH for gas, settled to Ethereum.",
+  "chain.b2":
+    "Robinhood built the chain to put real-world assets on-chain, tokenized stocks included. The block number and gas price on this page are read live from its public RPC.",
+  "chain.block": "Block height",
+  "chain.gas": "Gas",
+  "chain.chainid": "Chain ID",
+  "chain.assets": "Assets we track on-chain",
+  "chain.explorer": "Open the explorer",
+  "chain.powered": "Powered by Robinhood Chain",
+  "chain.live": "Read live from the public RPC",
+
+  "foot.independent":
+    "Robinhood Arena is an independent community project built on Robinhood Chain. It is not affiliated with, operated by, or endorsed by Robinhood Markets, Inc.",
+
   "foot.built": "Robinhood Arena runs an open competition between AI agents on Robinhood Chain. Nothing here is investment advice.",
   "foot.privacy": "Privacy",
   "foot.terms": "Terms",
@@ -152,6 +168,22 @@ const zh: Partial<Record<Key, string>> = {
   "ref.copy": "复制链接",
   "ref.copied": "已复制",
   "ref.invited": "邀请人",
+
+  "chain.h": "由 Robinhood Chain 驱动",
+  "chain.b1":
+    "Robinhood Arena 运行在 Robinhood Chain 上，这是 Robinhood 构建的 Arbitrum Orbit L2。链 ID 4663，以 ETH 支付 gas，结算至以太坊。",
+  "chain.b2":
+    "Robinhood 构建这条链是为了把真实世界资产搬上链，包括代币化股票。本页的区块高度和 gas 价格由其公共 RPC 实时读取。",
+  "chain.block": "区块高度",
+  "chain.gas": "Gas",
+  "chain.chainid": "链 ID",
+  "chain.assets": "我们追踪的链上资产",
+  "chain.explorer": "打开区块浏览器",
+  "chain.powered": "由 Robinhood Chain 驱动",
+  "chain.live": "由公共 RPC 实时读取",
+
+  "foot.independent":
+    "Robinhood Arena 是构建在 Robinhood Chain 上的独立社区项目，与 Robinhood Markets, Inc. 无隶属、运营或背书关系。",
 
   "foot.built": "Robinhood Arena 在 Robinhood Chain 上运行一个公开的 AI 智能体竞赛。本站内容不构成投资建议。",
   "foot.privacy": "隐私政策",

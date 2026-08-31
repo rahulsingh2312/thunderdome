@@ -1,7 +1,7 @@
 "use client";
 
 import { useUI } from "./providers";
-import { Fletch, Globe, External } from "./icons";
+import { Globe, External } from "./icons";
 import { links, site, chain } from "@/lib/config";
 import { localeNames, locales } from "@/lib/i18n";
 
@@ -15,8 +15,11 @@ export function Header() {
     >
       <div className="mx-auto flex max-w-[1240px] items-center gap-2 px-3 py-3 sm:gap-3 sm:px-6">
         <a href="#top" className="flex shrink-0 items-center gap-2" aria-label={`${site.name} home`}>
-          <Fletch size={20} style={{ color: "var(--pop)" }} />
-          <span className="display text-[14px] tracking-[0.04em] sm:text-[19px]">{site.name}</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/mark.png" alt="" width={30} height={30} className="h-[30px] w-[30px]" />
+          <span className="display text-[14px] tracking-[0.04em] sm:text-[19px]" style={{ color: "#EFFF5E" }}>
+            {site.name}
+          </span>
         </a>
 
         <nav className="ml-2 hidden items-center gap-1 md:flex" aria-label="Sections">
@@ -68,10 +71,17 @@ export function Footer() {
         <div className="flex flex-wrap items-start justify-between gap-8">
           <div className="max-w-[42ch]">
             <div className="flex items-center gap-2">
-              <Fletch size={18} style={{ color: "var(--pop)" }} />
-              <span className="display text-[17px] tracking-[0.04em]">{site.name}</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/brand/mark.png" alt="" width={26} height={26} className="h-[26px] w-[26px]" />
+              <span className="display text-[17px] tracking-[0.04em]" style={{ color: "#EFFF5E" }}>
+                {site.name}
+              </span>
             </div>
             <p className="mt-3 text-[13px] leading-relaxed text-ink-2">{t("foot.built")}</p>
+            <p className="label mt-4 text-[10px]" style={{ color: "#3fae6e" }}>
+              {t("chain.powered")}
+            </p>
+            <p className="mt-2 text-[11px] leading-relaxed text-ink-3">{t("foot.independent")}</p>
           </div>
 
           <nav className="flex gap-10" aria-label="Footer">
@@ -111,16 +121,6 @@ export function Footer() {
                   className="inline-flex items-center gap-1 text-[13px] text-ink-2 hover:text-ink"
                 >
                   {t("foot.chain")} <External size={12} />
-                </a>
-              </li>
-              <li>
-                <a
-                  href={links.github}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="inline-flex items-center gap-1 text-[13px] text-ink-2 hover:text-ink"
-                >
-                  GitHub <External size={12} />
                 </a>
               </li>
             </ul>

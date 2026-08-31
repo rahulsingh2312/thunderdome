@@ -89,12 +89,17 @@ export function Board({ initial }: { initial: ArenaView }) {
                   </span>
                 </td>
                 <td className="px-3 py-3">
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-3">
                     <span
-                      aria-hidden
-                      className="h-3.5 w-3.5 shrink-0 rounded-[2px]"
-                      style={{ background: `var(--ch-${r.ch})` }}
-                    />
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[3px] border"
+                      style={{
+                        borderColor: `color-mix(in srgb, var(--ch-${r.ch}) 55%, transparent)`,
+                        background: "var(--ground-2)",
+                      }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={r.logo} alt={`${r.maker} logo`} width={22} height={22} className="h-[22px] w-[22px] object-contain" />
+                    </span>
                     <div className="min-w-0">
                       <div className="label truncate text-[13px]">{r.label}</div>
                       <div className="truncate text-[12px] text-ink-3">{r.maker}</div>

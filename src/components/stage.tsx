@@ -8,16 +8,30 @@ import { Lamp, Warning, External, Check } from "./icons";
 import type { ArenaView } from "@/lib/engine";
 import { chain, site, treasury } from "@/lib/config";
 import { money, percent, price, truncateMiddle } from "@/lib/format";
+import { formatEther, parseEther } from "viem";
 import {
-  balanceOf,
-  connect,
-  ensureChain,
-  formatEth,
-  hasWallet,
-  parseEth,
-  sendDeposit,
-  waitMined,
-} from "@/lib/wallet";
+  useAccount,
+  useBalance,
+  useConnect,
+  useDisconnect,
+  usePublicClient,
+  useSendTransaction,
+  useSwitchChain,
+} from "wagmi";
+
+function formatEth(wei: bigint, digits = 4): string {
+  const [whole, frac = ""] = formatEther(wei).split(".");
+  return `${whole}.${(frac + "0".repeat(digits)).slice(0, digits)}`;
+}
+
+function parseEth(v: string): bigint | null {
+  if (!/^\d*\.?\d*$/.test(v) || v === "" || v === ".") return null;
+  try {
+    return parseEther(v);
+  } catch {
+    return null;
+  }
+}
 
 const ArcadeScene = nextDynamic(() => import("./arcade"), { ssr: false });
 
@@ -45,11 +59,22 @@ export function Stage({ initial }: { initial: ArenaView }) {
   const { data } = useArena(initial);
   const [selected, setSelected] = useState<number | null>(null);
   const [backing, setBacking] = useState<Backing>({});
-  const [account, setAccount] = useState<string | null>(null);
-  const [balance, setBalance] = useState<bigint | null>(null);
   const [amount, setAmount] = useState<string>(PRESETS[1]);
   const [phase, setPhase] = useState<DepositPhase>({ step: "idle" });
   const meRef = useRef<string | null>(null);
+
+  const { address: account, chainId } = useAccount();
+  const { connectors, connectAsync, isPending: connecting } = useConnect();
+  const { disconnect } = useDisconnect();
+  const { switchChainAsync } = useSwitchChain();
+  const { sendTransactionAsync } = useSendTransaction();
+  const publicClient = usePublicClient();
+  const { data: balanceData } = useBalance({
+    address: account,
+    chainId: chain.id,
+    query: { refetchInterval: 15_000 },
+  });
+  const balance = balanceData?.value ?? null;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -84,24 +109,6 @@ export function Stage({ initial }: { initial: ArenaView }) {
     return () => clearInterval(id);
   }, [refreshBacking]);
 
-  // Live wallet balance, refreshed from the public RPC.
-  useEffect(() => {
-    if (!account) return;
-    let alive = true;
-    const read = async () => {
-      try {
-        const b = await balanceOf(account);
-        if (alive) setBalance(b);
-      } catch {}
-    };
-    read();
-    const id = setInterval(read, 15_000);
-    return () => {
-      alive = false;
-      clearInterval(id);
-    };
-  }, [account]);
-
   const byCh = useMemo(() => [...data.rows].sort((a, b) => a.ch - b.ch), [data.rows]);
   const screens = useMemo(
     () =>
@@ -112,6 +119,7 @@ export function Stage({ initial }: { initial: ArenaView }) {
           ch: r.ch,
           ret: r.ret,
           equityText: money(r.equity),
+          logo: r.logo,
           spark: sparkOf(r.equityCurve),
           backedText: wei && wei !== "0" ? `Ξ${formatEth(BigInt(wei))}` : null,
         };
@@ -121,14 +129,17 @@ export function Stage({ initial }: { initial: ArenaView }) {
   const agent = selected != null ? byCh[selected] : null;
   const agentBackedWei = agent ? BigInt(backing[agent.id]?.totalWei ?? "0") : 0n;
 
-  const doConnect = async () => {
+  const doConnect = async (connectorUid: string) => {
     try {
-      const acct = await connect();
-      await ensureChain();
-      setAccount(acct);
+      const connector = connectors.find((c) => c.uid === connectorUid);
+      if (!connector) return;
+      await connectAsync({ connector, chainId: chain.id });
       setPhase({ step: "idle" });
     } catch (err) {
-      setPhase({ step: "error", message: err instanceof Error ? err.message : t("wallet.failed") });
+      setPhase({
+        step: "error",
+        message: err instanceof Error ? err.message.split("\n")[0].slice(0, 90) : t("wallet.failed"),
+      });
     }
   };
 
@@ -138,18 +149,17 @@ export function Stage({ initial }: { initial: ArenaView }) {
     if (!wei || wei <= 0n) return;
     setPhase({ step: "sending" });
     try {
-      await ensureChain();
-      const tx = await sendDeposit(account, wei);
+      if (chainId !== chain.id) await switchChainAsync({ chainId: chain.id });
+      const tx = await sendTransactionAsync({ to: treasury, value: wei, chainId: chain.id });
       setPhase({ step: "mining", tx });
-      const mined = await waitMined(tx);
-      if (!mined) throw new Error(t("wallet.failed"));
+      const receipt = await publicClient?.waitForTransactionReceipt({ hash: tx, timeout: 180_000 });
+      if (receipt?.status !== "success") throw new Error(t("wallet.failed"));
       await fetch("/api/back", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ tx, machine: agent.id, me: meRef.current }),
       });
       await refreshBacking();
-      if (account) setBalance(await balanceOf(account).catch(() => null));
       setPhase({ step: "done", tx });
     } catch (err) {
       setPhase({
@@ -174,13 +184,19 @@ export function Stage({ initial }: { initial: ArenaView }) {
       />
 
       <div className="pointer-events-none absolute inset-x-0 top-0 flex flex-col items-center gap-2 px-4 pt-9 text-center">
-        <h1
-          className="display text-[clamp(2rem,6.5vw,4.2rem)]"
-          style={{ textShadow: "0 0 28px color-mix(in srgb, var(--pop) 55%, transparent)" }}
-        >
-          {site.name}
+        <h1 className="m-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/lockup-dark.png"
+            alt={site.name}
+            width={300}
+            height={300}
+            className="h-auto w-[min(38vw,230px)]"
+            style={{ filter: "drop-shadow(0 0 26px rgba(239, 255, 94, 0.45))" }}
+          />
+          <span className="sr-only">{site.name}</span>
         </h1>
-        <p className="label text-[12px] text-ink-2">{t("stage.sub")}</p>
+        <p className="label text-[12px]" style={{ color: "#c9d67a" }}>{t("stage.sub")}</p>
       </div>
 
       {selected == null && (
@@ -208,7 +224,13 @@ export function Stage({ initial }: { initial: ArenaView }) {
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2.5">
-                <span aria-hidden className="h-3.5 w-3.5 rounded-[2px]" style={{ background: `var(--ch-${agent.ch})` }} />
+                <span
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[3px] border"
+                  style={{ borderColor: `color-mix(in srgb, var(--ch-${agent.ch}) 55%, transparent)`, background: "var(--ground-2)" }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={agent.logo} alt={`${agent.maker} logo`} width={20} height={20} className="h-5 w-5 object-contain" />
+                </span>
                 <h2 className="display not-italic text-[22px]">{agent.label}</h2>
               </div>
               <p className="mt-0.5 text-[12px] text-ink-3">{agent.maker}</p>
@@ -266,20 +288,33 @@ export function Stage({ initial }: { initial: ArenaView }) {
               {t("wallet.add")}
             </h3>
 
-            {!hasWallet() ? (
-              <p className="mt-2 text-[12.5px] leading-relaxed text-ink-3">{t("wallet.nowallet")}</p>
-            ) : !account ? (
-              <button
-                onClick={doConnect}
-                className="label lift mt-3 inline-flex min-h-[46px] w-full items-center justify-center gap-2 text-[12px]"
-                style={{ background: "var(--pop)", color: "var(--pop-ink)", borderRadius: "var(--r)" }}
-              >
-                {t("wallet.connect")}
-              </button>
+            {!account ? (
+              <div className="mt-3 grid gap-2">
+                {connectors.map((c) => (
+                  <button
+                    key={c.uid}
+                    onClick={() => doConnect(c.uid)}
+                    disabled={connecting}
+                    className="label lift inline-flex min-h-[44px] w-full items-center justify-center gap-2 border text-[12px] disabled:opacity-50"
+                    style={{ borderColor: "var(--pop)", color: "var(--pop)", borderRadius: "var(--r)" }}
+                  >
+                    {t("wallet.connect")}: {c.name}
+                  </button>
+                ))}
+                {connectors.length === 0 && (
+                  <p className="text-[12.5px] leading-relaxed text-ink-3">{t("wallet.nowallet")}</p>
+                )}
+              </div>
             ) : (
               <>
                 <div className="mt-2 flex items-center justify-between gap-2">
-                  <span className="data text-[11px] text-ink-3">{truncateMiddle(account)}</span>
+                  <button
+                    onClick={() => disconnect()}
+                    className="data text-[11px] text-ink-3 underline decoration-dotted hover:text-ink-2"
+                    title="Disconnect"
+                  >
+                    {truncateMiddle(account)}
+                  </button>
                   <span className="data text-[12px] tabular-nums text-ink-2">
                     {t("wallet.balance")}: {balance != null ? `Ξ${formatEth(balance)}` : "…"}
                   </span>

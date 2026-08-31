@@ -71,8 +71,7 @@ export const points = {
 } as const;
 
 export const links = {
-  x: "https://x.com/thunderdomedesk",
-  github: "https://github.com/rahulsingh2312/thunderdome",
+  x: "https://x.com/robinhoodarena_",
   support: "mailto:hello@thunderdome.trade",
   privacy: "/privacy",
   terms: "/terms",

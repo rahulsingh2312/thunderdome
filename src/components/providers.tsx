@@ -1,7 +1,12 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { WagmiProvider } from "wagmi";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { wagmiConfig } from "@/lib/wagmi";
 import { translate, type Key, type Locale } from "@/lib/i18n";
+
+const queryClient = new QueryClient();
 
 type Ctx = {
   locale: Locale;
@@ -39,7 +44,13 @@ export function Providers({ children }: { children: ReactNode }) {
     [locale, setLocale],
   );
 
-  return <Context.Provider value={value}>{children}</Context.Provider>;
+  return (
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <Context.Provider value={value}>{children}</Context.Provider>
+      </QueryClientProvider>
+    </WagmiProvider>
+  );
 }
 
 export function useUI(): Ctx {
