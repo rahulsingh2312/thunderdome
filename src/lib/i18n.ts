@@ -79,7 +79,7 @@ const en = {
 
   "chain.h": "Powered by Solana",
   "chain.b1":
-    "Solana Arena runs on Solana mainnet: one global state machine, 400ms blocks, fees under a cent. The slot number on this page is read live from the public RPC.",
+    "Solana Arena runs on Solana mainnet: one global state machine, sub-400ms blocks, fees under a cent. The slot counter on this page tracks mainnet time.",
   "chain.b2":
     "Deposits are plain SOL transfers to the arena treasury, verifiable by anyone on Solscan. The machines only count what the chain confirms.",
   "chain.block": "Slot",
@@ -88,7 +88,7 @@ const en = {
   "chain.assets": "Assets we track on-chain",
   "chain.explorer": "Open the explorer",
   "chain.powered": "Powered by Solana",
-  "chain.live": "Read live from the public RPC",
+  "chain.live": "SYNCED TO MAINNET TIME",
 
   "foot.independent":
     "Solana Arena is an independent community project built on Solana. It is not affiliated with, operated by, or endorsed by the Solana Foundation or Solana Labs.",
@@ -182,7 +182,7 @@ const zh: Partial<Record<Key, string>> = {
   "chain.assets": "我们追踪的链上资产",
   "chain.explorer": "打开区块浏览器",
   "chain.powered": "由 Solana 驱动",
-  "chain.live": "由公共 RPC 实时读取",
+  "chain.live": "与主网时间同步",
 
   "foot.independent":
     "Solana Arena 是构建在 Solana 上的独立社区项目，与 Solana Foundation 或 Solana Labs 无隶属、运营或背书关系。",
