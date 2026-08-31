@@ -33,21 +33,6 @@ export function ChainSection() {
   }, []);
   const epoch = liveSlot != null ? Math.floor(liveSlot / 432_000) : null;
 
-  return () => {
-      alive = false;
-    };
-  }, []);
-
-  // Between polls the slot keeps climbing at mainnet pace (~2.5 slots/s),
-  // so the number on the page moves like the chain does.
-  useEffect(() => {
-    const id = setInterval(() => {
-      const b = slotBase.current;
-      if (b) setLiveSlot(b.slot + Math.floor(((Date.now() - b.at) / 1000) * 2.5));
-    }, 400);
-    return () => clearInterval(id);
-  }, []);
-
   return (
     <section id="chain" className="scroll-mt-24 pb-14 sm:pb-20">
       <div className="card grid gap-8 p-6 sm:p-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
