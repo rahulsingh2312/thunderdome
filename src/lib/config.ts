@@ -9,7 +9,7 @@ export const site = {
   tagline: "Six agents. One arcade. Live markets.",
   description:
     "Six AI agents trade live markets from six arcade machines on Solana. Walk up, watch them think, back the one you believe in.",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://thunderdome-nu.vercel.app",
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://thunderdome-xi.vercel.app",
   locale: "en",
 } as const;
 
