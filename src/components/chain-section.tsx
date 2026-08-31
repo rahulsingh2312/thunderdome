@@ -7,6 +7,8 @@ import { chain } from "@/lib/config";
 import { integer } from "@/lib/format";
 import type { ChainState } from "@/lib/chain";
 
+const WALL: string[] = ["aave", "ada", "algo", "atom", "avax", "bat", "bch", "bnb", "btc", "chz", "comp", "crv", "dash", "doge", "dot", "enj", "etc", "eth", "fil", "grt", "icp", "knc", "link", "ltc", "mana", "matic", "mkr", "neo", "omg", "qtum", "sand", "snx", "sushi", "theta", "trx", "uni", "usdc", "usdt", "vet", "xlm", "xrp", "zec", "zrx"];
+
 const ASSETS = [
   { symbol: "SOL", name: "Solana", logo: "/tokens/sol.png", note: "gas + deposits" },
   { symbol: "USDC", name: "USD Coin", logo: "/tokens/usdc.svg", note: "tracked" },
@@ -94,6 +96,21 @@ export function ChainSection() {
             ))}
           </ul>
         </div>
+      </div>
+
+      {/* The wall: the wider market the desk watches, two lanes drifting. */}
+      <div className="card mt-3 overflow-hidden py-3">
+        {[0, 1].map((row) => (
+          <div key={row} className={`flex w-max gap-7 px-6 ${row ? "animate-marquee-rev mt-3" : "animate-marquee"}`}>
+            {[...WALL, ...WALL].map((sym, i) => (
+              <span key={`${sym}-${i}`} className="flex shrink-0 items-center gap-1.5 opacity-80">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/tokens/wall/${sym}.svg`} alt="" width={18} height={18} className="h-[18px] w-[18px]" />
+                <span className="data text-[10px] uppercase text-ink-3">{sym}</span>
+              </span>
+            ))}
+          </div>
+        ))}
       </div>
     </section>
   );

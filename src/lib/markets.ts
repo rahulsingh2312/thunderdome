@@ -106,7 +106,7 @@ export async function getQuotes(): Promise<{ quotes: Quote[]; stale: boolean }> 
 /** Recent candles, used for the model's price-history input and the price rail. */
 export async function getCandles(
   symbol: Symbol_,
-  interval: "5m" | "15m" | "1h" = "15m",
+  interval: "1m" | "5m" | "15m" | "1h" = "15m",
   hours = 24,
 ): Promise<Candle[]> {
   try {

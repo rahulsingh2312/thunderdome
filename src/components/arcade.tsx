@@ -351,9 +351,11 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
 
     const cableMat = new THREE.MeshStandardMaterial({ color: 0x0b100e, roughness: 0.9 });
 
-    const cabs: Cab[] = channels.map((c, i) => {
+    const mobile = window.innerWidth < 680;
+    const roster = mobile ? channels.slice(0, 4) : channels;
+    const cabs: Cab[] = roster.map((c, i) => {
       const group = new THREE.Group();
-      group.position.x = (i - (channels.length - 1) / 2) * SPACING;
+      group.position.x = (i - (roster.length - 1) / 2) * SPACING;
       group.userData.cab = i;
 
       const body = new THREE.Mesh(new THREE.BoxGeometry(1.9, 3.2, 1.3), bodyMats[i]);
@@ -609,11 +611,11 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
 
       // The display cycles logo -> creature -> live chart, always dead centre.
       // Nothing pans; the switch is a glitch, like a hologram re-tuning.
-      const PHASE_S = 4.2;
+      const PHASE_S = 0.7;
       const cyclePos = (t / PHASE_S + i * 0.7) % 3;
       const phase = reduced ? 1 : Math.floor(cyclePos);
       const intoPhase = (cyclePos - phase) * PHASE_S;
-      const switching = !reduced && intoPhase < 0.3;
+      const switching = !reduced && intoPhase < 0.18;
 
       // Hologram breathing.
       const holo = reduced ? 1 : 0.86 + 0.14 * Math.sin(t * 7 + i * 2);
@@ -871,8 +873,8 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      CAM_DEFAULT.z = camera.aspect < 0.9 ? 17 : 12.4;
-      camera.fov = camera.aspect < 0.9 ? 52 : 45;
+      CAM_DEFAULT.z = camera.aspect < 0.9 ? (mobile ? 11.5 : 17) : 12.4;
+      camera.fov = camera.aspect < 0.9 ? 55 : 45;
       camera.updateProjectionMatrix();
     }
     resize();

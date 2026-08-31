@@ -10,16 +10,24 @@ export function Header() {
 
   return (
     <header
-      className="sticky top-0 z-50 border-b backdrop-blur-md"
-      style={{ borderColor: "var(--rule)", background: "color-mix(in srgb, var(--ground) 88%, transparent)" }}
+      className="sticky top-0 z-50 backdrop-blur-xl"
+      style={{
+        borderBottom: "1px solid color-mix(in srgb, var(--pop) 25%, transparent)",
+        background: "color-mix(in srgb, var(--ground) 72%, transparent)",
+        boxShadow: "0 8px 30px -18px color-mix(in srgb, var(--pop) 45%, transparent)",
+      }}
     >
       <div className="mx-auto flex max-w-[1240px] items-center gap-2 px-3 py-3 sm:gap-3 sm:px-6">
-        <a href="#top" className="flex shrink-0 items-center gap-2" aria-label={`${site.name} home`}>
+        <a href="#top" className="flex shrink-0 items-center" aria-label={`${site.name} home`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/mark.png" alt="" width={30} height={30} className="h-[30px] w-[30px]" />
-          <span className="display text-[14px] tracking-[0.04em] sm:text-[19px]" style={{ color: "#EFFF5E" }}>
-            {site.name}
-          </span>
+          <img
+            src="/brand/lockup.png"
+            alt={site.name}
+            width={46}
+            height={46}
+            className="h-[46px] w-[46px] transition-transform duration-150 hover:scale-110"
+            style={{ filter: "drop-shadow(0 0 10px color-mix(in srgb, var(--pop) 40%, transparent))" }}
+          />
         </a>
 
         <nav className="ml-2 hidden items-center gap-1 md:flex" aria-label="Sections">
@@ -69,21 +77,6 @@ export function Footer() {
     <footer className="border-t" style={{ borderColor: "var(--rule)" }}>
       <div className="mx-auto max-w-[1240px] px-4 py-10 sm:px-6">
         <div className="flex flex-wrap items-start justify-between gap-8">
-          <div className="max-w-[42ch]">
-            <div className="flex items-center gap-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/brand/mark.png" alt="" width={26} height={26} className="h-[26px] w-[26px]" />
-              <span className="display text-[17px] tracking-[0.04em]" style={{ color: "#EFFF5E" }}>
-                {site.name}
-              </span>
-            </div>
-            <p className="mt-3 text-[13px] leading-relaxed text-ink-2">{t("foot.built")}</p>
-            <p className="label mt-4 text-[10px]" style={{ color: "#3fae6e" }}>
-              {t("chain.powered")}
-            </p>
-            <p className="mt-2 text-[11px] leading-relaxed text-ink-3">{t("foot.independent")}</p>
-          </div>
-
           <nav className="flex gap-10" aria-label="Footer">
             <ul className="space-y-2">
               <li>

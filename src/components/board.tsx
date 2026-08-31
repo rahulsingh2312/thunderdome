@@ -3,10 +3,20 @@
 import { useUI } from "./providers";
 import { Ago } from "./relative-time";
 import { Lamp, Warning } from "./icons";
-import { useArena } from "./use-arena";
-import type { ArenaView } from "@/lib/engine";
 import { launch } from "@/lib/config";
 import { money, percent, price } from "@/lib/format";
+
+export type BoardRow = {
+  id: string;
+  label: string;
+  maker: string;
+  ch: number;
+  logo: string;
+  equity: number;
+  ret: number;
+  positionsText: string;
+  lastDecisionAt: number | null;
+};
 
 function Delta({ ratio }: { ratio: number }) {
   const color = ratio === 0 ? "var(--ink-2)" : ratio > 0 ? "var(--up)" : "var(--down)";
@@ -17,9 +27,8 @@ function Delta({ ratio }: { ratio: number }) {
   );
 }
 
-export function Board({ initial }: { initial: ArenaView }) {
+export function Board({ rows, armed, startingCapital }: { rows: BoardRow[]; armed: boolean; startingCapital: number }) {
   const { t } = useUI();
-  const { data, failed, refresh } = useArena(initial);
 
   return (
     <section id="board" className="scroll-mt-24 py-14 sm:py-20">
@@ -29,13 +38,13 @@ export function Board({ initial }: { initial: ArenaView }) {
           <span
             className="label inline-flex items-center gap-1.5 border px-2.5 py-1.5 text-[11px]"
             style={{
-              color: data.armed ? "var(--up)" : "var(--pop)",
+              color: armed ? "var(--up)" : "var(--pop)",
               borderColor: "var(--rule)",
               borderRadius: "var(--r)",
             }}
           >
-            {data.armed ? <Lamp size={8} className="animate-blip" /> : <Warning size={11} />}
-            {data.armed ? t("state.armed") : t("state.unarmed")}
+            {armed ? <Lamp size={8} className="animate-blip" /> : <Warning size={11} />}
+            {armed ? t("state.armed") : t("state.unarmed")}
           </span>
           {!launch.deskFunded && (
             <span
@@ -51,7 +60,7 @@ export function Board({ initial }: { initial: ArenaView }) {
       <div className="card overflow-x-auto">
         <table className="w-full min-w-[560px] border-collapse">
           <caption className="sr-only">
-            Arena standings, ranked by equity against {money(data.startingCapital)} of{" "}
+            Arena standings, ranked by equity against {money(startingCapital)} of{" "}
             {launch.capitalLabel} capital
           </caption>
           <thead>
@@ -70,7 +79,7 @@ export function Board({ initial }: { initial: ArenaView }) {
             </tr>
           </thead>
           <tbody>
-            {data.rows.map((r, i) => (
+            {rows.map((r, i) => (
               <tr
                 key={r.id}
                 className="border-b transition-colors duration-150 last:border-0 hover:bg-[var(--ground-2)]"
@@ -110,11 +119,7 @@ export function Board({ initial }: { initial: ArenaView }) {
                 <td className="px-3 py-3 text-right text-[14px]">
                   <Delta ratio={r.ret} />
                 </td>
-                <td className="data px-3 py-3 text-right text-[13px] tabular-nums text-ink-2">
-                  {r.positions.length === 0
-                    ? "flat"
-                    : r.positions.map((p) => `${p.side === "long" ? "L" : "S"} ${p.symbol} @ ${price(p.entry)}`).join(", ")}
-                </td>
+                <td className="data px-3 py-3 text-right text-[13px] tabular-nums text-ink-2">{r.positionsText}</td>
                 <td className="data px-3 py-3 text-right text-[12px] tabular-nums text-ink-3">
                   <Ago at={r.lastDecisionAt} fallback="not yet" />
                 </td>
@@ -125,14 +130,6 @@ export function Board({ initial }: { initial: ArenaView }) {
       </div>
 
       <p className="mt-3 text-[13px] leading-relaxed text-ink-3">{t("board.note")}</p>
-      {(failed || data.quotesStale) && (
-        <p className="data mt-1 text-[12px]" style={{ color: "var(--pop)" }}>
-          {t("state.degraded")}{" "}
-          <button onClick={refresh} className="underline">
-            {t("state.retry")}
-          </button>
-        </p>
-      )}
     </section>
   );
 }

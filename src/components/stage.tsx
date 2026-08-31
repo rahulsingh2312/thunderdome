@@ -14,6 +14,22 @@ import { useClient } from "@solana/react";
 import { useConnectedWallet, useDisconnect } from "@solana/kit-plugin-wallet/react";
 import { WalletModal } from "./wallet-modal";
 import { type AppClient } from "./providers";
+import { Board } from "./board";
+import { CandleChart, type Candle } from "./candles";
+import { useLiveMids } from "./use-live-mids";
+import { buildSim, pickReason, type SimFill } from "@/lib/sim";
+import { universe, type Symbol_ } from "@/lib/config";
+
+/** Inline SOL mark for amounts: the real logo, not a glyph. */
+function SolAmount({ children, size = 12 }: { children: React.ReactNode; size?: number }) {
+  return (
+    <span className="inline-flex items-center gap-1 tabular-nums">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/tokens/sol.png" alt="SOL" width={size} height={size} style={{ width: size, height: size }} />
+      {children}
+    </span>
+  );
+}
 
 /** Lamports → "0.0500" SOL. */
 function formatSol(l: bigint, digits = 4): string {
@@ -63,6 +79,45 @@ export function Stage({ initial }: { initial: ArenaView }) {
   const [amount, setAmount] = useState<string>(PRESETS[1]);
   const [phase, setPhase] = useState<DepositPhase>({ step: "idle" });
   const meRef = useRef<string | null>(null);
+  const [candlesFull, setCandlesFull] = useState<Record<string, Candle[]>>({});
+  const [forming, setForming] = useState<Record<string, Candle | null>>({});
+  const [extraFills, setExtraFills] = useState<SimFill[]>([]);
+  const simPos = useRef<Record<string, { sym: Symbol_; side: "long" | "short"; entry: number; qty: number } | null>>({});
+  const nextAct = useRef<Record<string, number>>({});
+  const live = useLiveMids([...universe]);
+  const liveRef = useRef(live);
+  liveRef.current = live;
+
+  /* Seed 24h of real one-minute candles once. */
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/candles", { cache: "no-store" });
+        if (res.ok) setCandlesFull((await res.json()) as Record<string, Candle[]>);
+      } catch {}
+    })();
+  }, []);
+
+  /* Every second: sculpt the forming candle from live mids. */
+  useEffect(() => {
+    if (!live.at) return;
+    setForming((prev) => {
+      const minute = Math.floor(live.at / 60_000) * 60_000;
+      const next: Record<string, Candle | null> = { ...prev };
+      for (const sym of universe) {
+        const v = live.mids[sym];
+        if (!Number.isFinite(v)) continue;
+        const f = next[sym];
+        if (!f || f.t < minute) {
+          if (f && f.t < minute) setCandlesFull((cf) => ({ ...cf, [sym]: [...(cf[sym] ?? []), f].slice(-1500) }));
+          next[sym] = { t: minute, o: v, h: v, l: v, c: v };
+        } else {
+          next[sym] = { ...f, h: Math.max(f.h, v), l: Math.min(f.l, v), c: v };
+        }
+      }
+      return next;
+    });
+  }, [live]);
 
   const client = useClient<AppClient>();
   const connected = useConnectedWallet(client);
@@ -131,23 +186,102 @@ export function Stage({ initial }: { initial: ArenaView }) {
   }, [refreshBacking]);
 
   const byCh = useMemo(() => [...data.rows].sort((a, b) => a.ch - b.ch), [data.rows]);
+
+  const realSignal = useMemo(
+    () => byCh.some((r) => r.equityCurve.length >= 2 && Math.max(...r.equityCurve.map((p) => p.e)) - Math.min(...r.equityCurve.map((p) => p.e)) > 1e-6),
+    [byCh],
+  );
+  const sim = useMemo(() => {
+    if (realSignal || !candlesFull.BTC || candlesFull.BTC.length < 100) return null;
+    return buildSim(candlesFull, byCh, data.startingCapital);
+  }, [realSignal, candlesFull, byCh, data.startingCapital]);
+  const simFills = useMemo(() => (sim ? [...[...extraFills].reverse(), ...sim.fills] : []), [sim, extraFills]);
+
+  /* The paper desk keeps trading at live prices, forever, in persona. */
+  useEffect(() => {
+    if (!sim) return;
+    const id = setInterval(() => {
+      const now = Date.now();
+      const mids = liveRef.current.mids;
+      const batch: SimFill[] = [];
+      byCh.forEach((r, personaIdx) => {
+        const due = nextAct.current[r.id] ?? (nextAct.current[r.id] = now + (20 + Math.random() * 120) * 1000);
+        if (now < due) {
+          const sayKey = `say-${r.id}`;
+          const lastSay = nextAct.current[sayKey] ?? 0;
+          if (now - lastSay > 110_000 && Math.random() < 0.22) {
+            nextAct.current[sayKey] = now;
+            batch.push({ id: `sim-say-${r.id}-${now}`, ts: now, model: r.id, sym: "BTC" as Symbol_, side: "long", kind: "say", price: 0, pnl: null, reason: pickReason(personaIdx, "banter", Math.random(), "BTC", "long") });
+          }
+          return;
+        }
+        nextAct.current[r.id] = now + (60 + Math.random() * 150) * 1000;
+        const pos = simPos.current[r.id];
+        if (!pos) {
+          const roll = Math.random();
+          const sym = (roll < 0.28 ? "BTC" : roll < 0.64 ? "ETH" : "SOL") as Symbol_;
+          const mid = mids[sym];
+          if (!Number.isFinite(mid)) return;
+          const side = Math.random() < 0.55 ? ("long" as const) : ("short" as const);
+          const lev = [12, 8, 25, 6, 30, 15][personaIdx % 6] * (0.85 + Math.random() * 0.3);
+          simPos.current[r.id] = { sym, side, entry: mid, qty: ((2500 + Math.random() * 3500) * lev) / mid };
+          batch.push({ id: `sim-x-${r.id}-${now}`, ts: now, model: r.id, sym, side, kind: "open", price: mid, pnl: null, reason: pickReason(personaIdx, "open", Math.random(), sym, side) });
+        } else {
+          const mid = mids[pos.sym];
+          if (!Number.isFinite(mid)) return;
+          const pnl = (mid - pos.entry) * pos.qty * (pos.side === "long" ? 1 : -1);
+          simPos.current[r.id] = null;
+          batch.push({ id: `sim-x-${r.id}-${now}`, ts: now, model: r.id, sym: pos.sym, side: pos.side, kind: "close", price: mid, pnl, reason: pickReason(personaIdx, pnl >= 0 ? "win" : "loss", Math.random(), pos.sym, pos.side) });
+        }
+      });
+      if (batch.length) setExtraFills((f) => [...f, ...batch].slice(-200));
+    }, 15_000);
+    return () => clearInterval(id);
+  }, [sim, byCh]);
+
+  /* What every surface shows: real rows, or the paper preview of them. */
+  const displayRows = useMemo(() => {
+    return byCh.map((r) => {
+      const simEquity = sim?.equity[r.id];
+      const pos = simPos.current[r.id];
+      const livePnl =
+        pos && liveRef.current.mids[pos.sym]
+          ? (liveRef.current.mids[pos.sym] - pos.entry) * pos.qty * (pos.side === "long" ? 1 : -1)
+          : 0;
+      const extraPnl = extraFills.filter((f) => f.model === r.id && f.pnl != null).reduce((a, f) => a + (f.pnl ?? 0), 0);
+      const equity = sim ? (simEquity ?? r.equity) + extraPnl + livePnl : r.equity;
+      return {
+        ...r,
+        equity,
+        ret: equity / data.startingCapital - 1,
+        lastDecisionAt: sim
+          ? (extraFills.filter((f) => f.model === r.id && f.kind !== "say").pop()?.ts ?? sim.last[r.id] ?? r.lastDecisionAt)
+          : r.lastDecisionAt,
+        positionsText: pos ? `${pos.side === "long" ? "L" : "S"} ${pos.sym} @ ${price(pos.entry)}` : "flat",
+        simCurve: sim?.curves[r.id] ?? [],
+      };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [byCh, sim, extraFills, data.startingCapital, live.at]);
+
+  const boardRows = useMemo(() => [...displayRows].sort((a, b) => b.equity - a.equity), [displayRows]);
   const screens = useMemo(
     () =>
-      byCh.map((r) => {
+      displayRows.map((r) => {
         const l = backing[r.id]?.totalLamports;
         return {
           label: r.label,
           ch: r.ch,
           ret: r.ret,
           equityText: money(r.equity),
-          logo: r.logo,
-          spark: sparkOf(r.equityCurve),
-          backedText: l && l !== "0" ? `◎${formatSol(BigInt(l))}` : null,
+          logo: r.logo.replace("/logos/", "/logos/dark/"),
+          spark: sparkOf(r.simCurve.length ? r.simCurve : r.equityCurve),
+          backedText: l && l !== "0" ? `${formatSol(BigInt(l), 2)} SOL` : null,
         };
       }),
-    [byCh, backing],
+    [displayRows, backing],
   );
-  const agent = selected != null ? byCh[selected] : null;
+  const agent = selected != null ? displayRows[selected] : null;
   const agentBackedLamports = agent ? BigInt(backing[agent.id]?.totalLamports ?? "0") : 0n;
 
   const doDeposit = async () => {
@@ -196,6 +330,7 @@ export function Stage({ initial }: { initial: ArenaView }) {
   const busy = phase.step === "sending" || phase.step === "mining";
 
   return (
+    <>
     <section id="arena" className="relative h-[92svh] min-h-[560px]">
       <WalletModal open={walletOpen} onClose={() => setWalletOpen(false)} />
       <ArcadeScene
@@ -221,7 +356,7 @@ export function Stage({ initial }: { initial: ArenaView }) {
           />
           <span className="sr-only">{site.name}</span>
         </h1>
-        <p className="label text-[12px]" style={{ color: "#c9d67a" }}>{t("stage.sub")}</p>
+
       </div>
 
       {selected == null && (
@@ -254,7 +389,7 @@ export function Stage({ initial }: { initial: ArenaView }) {
                   style={{ borderColor: `color-mix(in srgb, var(--ch-${agent.ch}) 55%, transparent)`, background: "var(--ground-2)" }}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={agent.logo} alt={`${agent.maker} logo`} width={20} height={20} className="h-5 w-5 object-contain" />
+                  <img src={agent.logo.replace("/logos/", "/logos/dark/")} alt={`${agent.maker} logo`} width={20} height={20} className="h-5 w-5 object-contain" />
                 </span>
                 <h2 className="display not-italic text-[22px]">{agent.label}</h2>
               </div>
@@ -286,25 +421,59 @@ export function Stage({ initial }: { initial: ArenaView }) {
             <div>
               <dt className="label text-[10px] text-ink-3">{t("wallet.backed")}</dt>
               <dd className="data mt-1 text-[15px] tabular-nums" style={{ color: "var(--ch-1)" }}>
-                ◎{formatSol(agentBackedLamports)}
+                <SolAmount size={13}>{formatSol(agentBackedLamports, 2)}</SolAmount>
               </dd>
             </div>
           </dl>
 
           <div className="mt-3">
             <h3 className="label text-[10px] text-ink-3">{t("agent.positions")}</h3>
-            <p className="data mt-1 text-[12px] leading-relaxed text-ink-2">
-              {agent.positions.length === 0
-                ? t("agent.flat")
-                : agent.positions.map((p) => `${p.side} ${p.symbol} @ ${price(p.entry)}`).join(" · ")}
-            </p>
+            <p className="data mt-1 text-[12px] leading-relaxed text-ink-2">{agent.positionsText}</p>
           </div>
 
+          {/* Live one-minute candles for the symbol this machine last touched. */}
+          {(() => {
+            const lastTrade = simFills.find((f) => f.model === agent.id && f.kind !== "say");
+            const sym = (lastTrade?.sym ?? "BTC") as Symbol_;
+            return (
+              <div className="mt-3">
+                <h3 className="label flex items-center gap-1.5 text-[10px] text-ink-3">
+                  {sym} · 1M
+                  <Lamp size={6} className="animate-blip" style={{ color: "var(--up)" }} />
+                </h3>
+                <CandleChart
+                  candles={(candlesFull[sym] ?? []).slice(-60)}
+                  forming={forming[sym] ?? null}
+                  symbol={sym}
+                  className="mt-1.5 h-[120px]"
+                />
+              </div>
+            );
+          })()}
+
+          {/* The machine talks: this model's live chatter and fills. */}
           <div className="mt-3">
             <h3 className="label text-[10px] text-ink-3">{t("agent.lastcall")}</h3>
-            <p className="mt-1 text-[12.5px] leading-relaxed text-ink-2">
-              {agent.fills[0]?.reason ?? t("agent.nocalls")}
-            </p>
+            <ul className="mt-1.5 max-h-[150px] space-y-2 overflow-y-auto pr-1">
+              {simFills.filter((f) => f.model === agent.id).slice(0, 8).map((f) => (
+                <li key={f.id} className="animate-rise border-l-2 pl-2" style={{ borderColor: `var(--ch-${agent.ch})` }}>
+                  <p className="text-[11.5px] leading-snug text-ink-2">{f.reason}</p>
+                  {f.kind !== "say" && (
+                    <p className="data mt-0.5 text-[10px] text-ink-3">
+                      {f.kind.toUpperCase()} {f.side.toUpperCase()} {f.sym} @ {price(f.price)}
+                      {f.pnl != null && (
+                        <span style={{ color: f.pnl >= 0 ? "var(--up)" : "var(--down)" }}>
+                          {" "}· {f.pnl >= 0 ? "+" : ""}{money(f.pnl, true)}
+                        </span>
+                      )}
+                    </p>
+                  )}
+                </li>
+              ))}
+              {simFills.filter((f) => f.model === agent.id).length === 0 && (
+                <li className="text-[11.5px] text-ink-3">{t("agent.nocalls")}</li>
+              )}
+            </ul>
           </div>
 
           {/* ── Add funds: real SOL, verified on-chain ─────────────────────── */}
@@ -332,7 +501,7 @@ export function Stage({ initial }: { initial: ArenaView }) {
                     {truncateMiddle(account)}
                   </button>
                   <span className="data text-[12px] tabular-nums text-ink-2">
-                    {t("wallet.balance")}: {balance != null ? `◎${formatSol(balance)}` : "…"}
+                    {t("wallet.balance")}: {balance != null ? <SolAmount>{formatSol(balance, 3)}</SolAmount> : "…"}
                   </span>
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -347,7 +516,7 @@ export function Stage({ initial }: { initial: ArenaView }) {
                         color: amount === p ? "var(--pop)" : "var(--ink-2)",
                       }}
                     >
-                      ◎{p}
+                      <SolAmount size={11}>{p}</SolAmount>
                     </button>
                   ))}
                   <input
@@ -365,7 +534,7 @@ export function Stage({ initial }: { initial: ArenaView }) {
                   className="label lift mt-3 inline-flex min-h-[46px] w-full items-center justify-center gap-2 text-[12px] disabled:cursor-not-allowed disabled:opacity-50"
                   style={{ background: "var(--pop)", color: "var(--pop-ink)", borderRadius: "var(--r)" }}
                 >
-                  {busy ? t("wallet.pending") : `${t("wallet.send")} · ◎${amount}`}
+                  {busy ? t("wallet.pending") : <>{t("wallet.send")} · <SolAmount size={13}>{amount}</SolAmount></>}
                 </button>
               </>
             )}
@@ -402,5 +571,10 @@ export function Stage({ initial }: { initial: ArenaView }) {
         </span>
       </div>
     </section>
+
+    <div className="mx-auto max-w-[1240px] px-4 sm:px-6">
+      <Board rows={boardRows} armed={data.armed} startingCapital={data.startingCapital} />
+    </div>
+    </>
   );
 }

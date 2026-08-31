@@ -7,7 +7,29 @@ import { site, points } from "@/lib/config";
 import { integer } from "@/lib/format";
 
 type Me = { code: string; points: number; refs: number; lastClaim: number | null; referredBy: string | null };
-type BoardRow = { code: string; points: number; refs: number };
+type BoardRow = { code: string; points: number; refs: number; paper?: boolean };
+
+const DRIFT_EPOCH = 1756600000000;
+
+/** The paper crowd: deterministic filler rows whose scores creep upward. */
+function paperRows(n = 50): BoardRow[] {
+  const abc = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  let seed = 9871;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const minutes = Math.floor((Date.now() - DRIFT_EPOCH) / 60000);
+  return Array.from({ length: n }, () => {
+    let code = "";
+    for (let i = 0; i < 6; i++) code += abc[Math.floor(rnd() * abc.length)];
+    const rate = rnd() * 2.2; // points per minute of drift
+    const base = Math.floor(150 + rnd() * rnd() * 4200);
+    return {
+      code,
+      points: base + Math.floor(minutes * rate),
+      refs: Math.floor(rnd() * rnd() * 15) + Math.floor((minutes * rate) / 900),
+      paper: true,
+    };
+  });
+}
 
 export function Referral() {
   const { t } = useUI();
@@ -20,8 +42,22 @@ export function Referral() {
   const loadBoard = useCallback(async () => {
     try {
       const res = await fetch("/api/social", { cache: "no-store" });
-      if (res.ok) setBoard(((await res.json()) as { board: BoardRow[] }).board ?? []);
+      if (res.ok) {
+        const real = ((await res.json()) as { board: BoardRow[] }).board ?? [];
+        const taken = new Set(real.map((r) => r.code));
+        setBoard(
+          [...real, ...paperRows().filter((r) => !taken.has(r.code))]
+            .sort((a, b) => b.points - a.points)
+            .slice(0, 50),
+        );
+      }
     } catch {}
+  }, []);
+
+  useEffect(() => {
+    const tick = setInterval(() => loadBoard(), 45_000);
+    return () => clearInterval(tick);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -155,6 +191,7 @@ export function Referral() {
                   <span className="data w-6 text-[12px] tabular-nums text-ink-3">{i + 1}</span>
                   <span className="data flex-1 text-[13px]">
                     {row.code}
+                    {row.paper && <span className="ml-1.5 text-[8px] text-ink-3">paper</span>}
                     {row.code === me.code && (
                       <span className="label ml-2 text-[9px]" style={{ color: "var(--pop)" }}>
                         <Lamp size={7} className="mr-1 inline" />
