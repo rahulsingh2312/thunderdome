@@ -3,12 +3,12 @@
  * Channel numbers map to --ch-N tokens in globals.css.
  */
 export type ModelId =
-  | "anthropic/claude-opus-4.5"
-  | "openai/gpt-5.2"
-  | "google/gemini-3-pro"
-  | "xai/grok-4"
-  | "alibaba/qwen3-max"
-  | "deepseek/deepseek-v3.2";
+  | "anthropic/claude-opus-5"
+  | "openai/gpt-5.6"
+  | "google/gemini-3.7-flash"
+  | "xai/grok-4.6"
+  | "alibaba/qwen3.8-max"
+  | "deepseek/deepseek-v4";
 
 export type Channel = {
   id: ModelId;
@@ -23,12 +23,12 @@ export type Channel = {
 };
 
 export const channels: Channel[] = [
-  { id: "anthropic/claude-opus-4.5", label: "OPUS 4.5", maker: "Anthropic", ch: 1, logo: "/logos/anthropic.png" },
-  { id: "openai/gpt-5.2", label: "GPT 5.2", maker: "OpenAI", ch: 2, logo: "/logos/openai.png" },
-  { id: "google/gemini-3-pro", label: "GEMINI 3", maker: "Google", ch: 3, logo: "/logos/gemini.png" },
-  { id: "xai/grok-4", label: "GROK 4", maker: "xAI", ch: 4, logo: "/logos/xai.png" },
-  { id: "alibaba/qwen3-max", label: "QWEN3 MAX", maker: "Alibaba", ch: 5, logo: "/logos/qwen.png" },
-  { id: "deepseek/deepseek-v3.2", label: "DEEPSEEK", maker: "DeepSeek", ch: 6, logo: "/logos/deepseek.png" },
+  { id: "anthropic/claude-opus-5", label: "OPUS 5", maker: "Anthropic", ch: 1, logo: "/logos/anthropic.png" },
+  { id: "openai/gpt-5.6", label: "GPT-5.6", maker: "OpenAI", ch: 2, logo: "/logos/openai.png" },
+  { id: "google/gemini-3.7-flash", label: "GEMINI 3.7", maker: "Google", ch: 3, logo: "/logos/gemini.png" },
+  { id: "xai/grok-4.6", label: "GROK 4.6", maker: "xAI", ch: 4, logo: "/logos/xai.png" },
+  { id: "alibaba/qwen3.8-max", label: "QWEN3.8 MAX", maker: "Alibaba", ch: 5, logo: "/logos/qwen.png" },
+  { id: "deepseek/deepseek-v4", label: "DEEPSEEK V4", maker: "DeepSeek", ch: 6, logo: "/logos/deepseek.png" },
 ];
 
 export const byId = (id: string) => channels.find((c) => c.id === id);

@@ -10,8 +10,8 @@ export function Header() {
 
   return (
     <header
-      className="sticky top-0 z-50"
-      style={{ background: "transparent" }}
+      className="fixed inset-x-0 top-0 z-50"
+      style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.35), transparent)" }}
     >
       <div className="mx-auto flex max-w-[1240px] items-center gap-2 px-3 py-3 sm:gap-3 sm:px-6">
         <a href="#top" className="flex shrink-0 items-center" aria-label={`${site.name} home`}>
@@ -19,10 +19,10 @@ export function Header() {
           <img
             src="/brand/lockup.png"
             alt={site.name}
-            width={46}
-            height={46}
-            className="h-[46px] w-[46px] transition-transform duration-150 hover:scale-110"
-            style={{ filter: "drop-shadow(0 0 10px color-mix(in srgb, var(--pop) 40%, transparent))" }}
+            width={76}
+            height={76}
+            className="h-[76px] w-auto transition-transform duration-150 hover:scale-110"
+            style={{ filter: "drop-shadow(0 0 12px color-mix(in srgb, var(--pop) 45%, transparent))" }}
           />
         </a>
 

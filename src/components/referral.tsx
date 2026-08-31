@@ -9,7 +9,8 @@ import { integer } from "@/lib/format";
 type Me = { code: string; points: number; refs: number; lastClaim: number | null; referredBy: string | null };
 type BoardRow = { code: string; points: number; refs: number; paper?: boolean };
 
-const DRIFT_EPOCH = 1756600000000;
+// Season start: 2026-08-28. Drift stays in the hundreds, not the millions.
+const DRIFT_EPOCH = 1787875200000;
 
 /** The paper crowd: deterministic filler rows whose scores creep upward. */
 function paperRows(n = 50): BoardRow[] {
@@ -20,12 +21,12 @@ function paperRows(n = 50): BoardRow[] {
   return Array.from({ length: n }, () => {
     let code = "";
     for (let i = 0; i < 6; i++) code += abc[Math.floor(rnd() * abc.length)];
-    const rate = rnd() * 2.2; // points per minute of drift
+    const rate = 0.05 + rnd() * 0.85; // points per minute of drift
     const base = Math.floor(150 + rnd() * rnd() * 4200);
     return {
       code,
-      points: base + Math.floor(minutes * rate),
-      refs: Math.floor(rnd() * rnd() * 15) + Math.floor((minutes * rate) / 900),
+      points: base + Math.floor(Math.max(0, minutes) * rate),
+      refs: Math.floor(rnd() * rnd() * 15) + Math.floor((Math.max(0, minutes) * rate) / 900),
       paper: true,
     };
   });
@@ -38,6 +39,7 @@ export function Referral() {
   const [copied, setCopied] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const [myId, setMyId] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   const loadBoard = useCallback(async () => {
     try {
@@ -91,6 +93,17 @@ export function Referral() {
   const cooldownMs = points.claimCooldownHours * 3600 * 1000;
   const nextClaimIn = me?.lastClaim ? me.lastClaim + cooldownMs - Date.now() : 0;
   const canClaim = me != null && nextClaimIn <= 0;
+  // Re-render each half-minute so the countdown actually counts down.
+  const [, setCooldownTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setCooldownTick((n) => n + 1), 30_000);
+    return () => clearInterval(id);
+  }, []);
+  const cooldownText = (() => {
+    const h = Math.floor(nextClaimIn / 3600000);
+    const m = Math.max(1, Math.ceil((nextClaimIn % 3600000) / 60000));
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  })();
 
   const copy = async () => {
     try {
@@ -144,7 +157,9 @@ export function Referral() {
           >
             {canClaim
               ? `${t("ref.claim")} (+${points.claim})`
-              : `${t("ref.cooling")} ${Math.ceil(nextClaimIn / 3600000)}h`}
+              : me == null
+                ? "…"
+                : `${t("ref.cooling")} ${cooldownText}`}
           </button>
 
           <p className="measure mt-4 text-[13px] leading-relaxed text-ink-3">{t("ref.how")}</p>
@@ -180,7 +195,7 @@ export function Referral() {
             <p className="mt-3 text-[13px] text-ink-3">{t("ref.empty")}</p>
           ) : (
             <ol className="mt-3">
-              {board.map((row, i) => (
+              {board.slice(0, showAll ? board.length : 10).map((row, i) => (
                 <li
                   key={row.code}
                   className="flex items-center gap-3 border-b py-2.5 last:border-0"
@@ -204,6 +219,15 @@ export function Referral() {
                 </li>
               ))}
             </ol>
+          )}
+          {board.length > 10 && !showAll && (
+            <button
+              onClick={() => setShowAll(true)}
+              className="label mt-3 min-h-[44px] w-full border text-[11px] text-ink-2 hover:text-ink"
+              style={{ borderColor: "var(--rule)", borderRadius: "var(--r)" }}
+            >
+              {`SHOW MORE (${board.length - 10})`}
+            </button>
           )}
         </div>
       </div>

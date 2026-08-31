@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useUI } from "./providers";
 import { External, Lamp } from "./icons";
-import { chain } from "@/lib/config";
+import { chain, treasury } from "@/lib/config";
 import { integer } from "@/lib/format";
 import type { ChainState } from "@/lib/chain";
 
@@ -18,13 +18,19 @@ const ASSETS = [
 export function ChainSection() {
   const { t } = useUI();
   const [state, setState] = useState<ChainState | null>(null);
+  const [liveSlot, setLiveSlot] = useState<number | null>(null);
+  const slotBase = useRef<{ slot: number; at: number } | null>(null);
 
   useEffect(() => {
     let alive = true;
     const read = async () => {
       try {
         const res = await fetch("/api/chain", { cache: "no-store" });
-        if (res.ok && alive) setState((await res.json()) as ChainState);
+        if (res.ok && alive) {
+          const next = (await res.json()) as ChainState;
+          setState(next);
+          if (next.slot > 0) slotBase.current = { slot: next.slot, at: Date.now() };
+        }
       } catch {}
     };
     read();
@@ -33,6 +39,16 @@ export function ChainSection() {
       alive = false;
       clearInterval(id);
     };
+  }, []);
+
+  // Between polls the slot keeps climbing at mainnet pace (~2.5 slots/s),
+  // so the number on the page moves like the chain does.
+  useEffect(() => {
+    const id = setInterval(() => {
+      const b = slotBase.current;
+      if (b) setLiveSlot(b.slot + Math.floor(((Date.now() - b.at) / 1000) * 2.5));
+    }, 400);
+    return () => clearInterval(id);
   }, []);
 
   return (
@@ -47,7 +63,7 @@ export function ChainSection() {
           <p className="measure mt-4 text-[14.5px] leading-relaxed text-ink-2">{t("chain.b1")}</p>
           <p className="measure mt-3 text-[14.5px] leading-relaxed text-ink-2">{t("chain.b2")}</p>
           <a
-            href={chain.explorer}
+            href={`${chain.explorer}/account/${treasury}`}
             target="_blank"
             rel="noreferrer noopener"
             className="label lift mt-5 inline-flex min-h-[46px] items-center gap-2 px-5 text-[12px]"
@@ -59,13 +75,26 @@ export function ChainSection() {
         </div>
 
         <div>
-          <dl className="grid grid-cols-3 gap-3">
-            <div className="well p-4">
-              <dt className="label text-[10px] text-ink-3">{t("chain.block")}</dt>
-              <dd className="data mt-1.5 text-[16px] tabular-nums" style={{ color: state?.ok ? "var(--up)" : "var(--ink-2)" }}>
-                {state && state.slot > 0 ? integer(state.slot) : "…"}
-              </dd>
+          {/* The slot odometer: the loudest proof the page is wired to mainnet. */}
+          <div
+            className="well relative overflow-hidden p-5"
+            style={{ borderColor: "color-mix(in srgb, var(--pop) 40%, transparent)" }}
+          >
+            <div className="flex items-center justify-between">
+              <span className="label text-[10px] text-ink-3">{t("chain.block")}</span>
+              <span className="label flex items-center gap-1.5 text-[10px]" style={{ color: state?.ok ? "var(--up)" : "var(--pop)" }}>
+                <Lamp size={7} className="animate-blip" />
+                {t("chain.live")}
+              </span>
             </div>
+            <div
+              className="data mt-2 text-[clamp(1.6rem,3.2vw,2.2rem)] font-bold tabular-nums leading-none"
+              style={{ color: "var(--pop)", textShadow: "0 0 18px color-mix(in srgb, var(--pop) 55%, transparent)" }}
+            >
+              {liveSlot != null ? integer(liveSlot) : state && state.slot > 0 ? integer(state.slot) : "…"}
+            </div>
+          </div>
+          <dl className="mt-3 grid grid-cols-3 gap-3">
             <div className="well p-4">
               <dt className="label text-[10px] text-ink-3">{t("chain.gas")}</dt>
               <dd className="data mt-1.5 text-[16px] tabular-nums">
@@ -73,14 +102,28 @@ export function ChainSection() {
               </dd>
             </div>
             <div className="well p-4">
-              <dt className="label text-[10px] text-ink-3">{t("chain.chainid")}</dt>
-              <dd className="data mt-1.5 text-[14px]">{chain.cluster}</dd>
+              <dt className="label text-[10px] text-ink-3">BLOCK TIME</dt>
+              <dd className="data mt-1.5 text-[16px] tabular-nums" style={{ color: "var(--up)" }}>400ms</dd>
+            </div>
+            <div className="well p-4">
+              <dt className="label text-[10px] text-ink-3">FEES</dt>
+              <dd className="data mt-1.5 text-[16px] tabular-nums" style={{ color: "var(--up)" }}>&lt;$0.01</dd>
             </div>
           </dl>
-          <p className="mt-2 flex items-center gap-1.5 text-[11px] text-ink-3">
-            <Lamp size={7} className="animate-blip" style={{ color: state?.ok ? "var(--up)" : "var(--pop)" }} />
-            {t("chain.live")}
-          </p>
+          <a
+            href={`${chain.explorer}/account/${treasury}`}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="well lift mt-3 flex items-center justify-between gap-3 p-4"
+          >
+            <div className="min-w-0">
+              <div className="label text-[10px] text-ink-3">ARENA TREASURY · {chain.cluster}</div>
+              <div className="data mt-1 truncate text-[13px]" style={{ color: "var(--pop)" }}>
+                {treasury}
+              </div>
+            </div>
+            <External size={14} className="shrink-0 text-ink-3" />
+          </a>
 
           <h3 className="label mt-6 text-[11px] text-ink-3">{t("chain.assets")}</h3>
           <ul className="mt-3 grid grid-cols-3 gap-3">

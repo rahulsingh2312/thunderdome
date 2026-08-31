@@ -260,7 +260,7 @@ export function Stage({ initial }: { initial: ArenaView }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [byCh, sim, extraFills, data.startingCapital, live.at]);
 
-  const boardRows = useMemo(() => [...displayRows].sort((a, b) => b.equity - a.equity), [displayRows]);
+  const boardRows = useMemo(() => displayRows.slice(0, 4).sort((a, b) => b.equity - a.equity), [displayRows]);
   const screens = useMemo(
     () =>
       displayRows.map((r) => {
@@ -372,7 +372,7 @@ export function Stage({ initial }: { initial: ArenaView }) {
 
       {agent && (
         <aside
-          className="card animate-rise absolute bottom-3 left-3 right-3 z-10 max-h-[calc(100%-24px)] overflow-y-auto p-5 sm:bottom-auto sm:left-auto sm:right-6 sm:top-1/2 sm:w-[360px] sm:-translate-y-1/2"
+          className="card animate-rise absolute bottom-3 left-3 right-3 z-[90] max-h-[calc(100%-24px)] overflow-y-auto p-5 sm:bottom-auto sm:left-auto sm:right-6 sm:top-1/2 sm:w-[360px] sm:-translate-y-1/2"
           role="dialog"
           aria-label={agent.label}
         >
