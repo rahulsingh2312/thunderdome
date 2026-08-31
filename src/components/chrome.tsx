@@ -1,7 +1,7 @@
 "use client";
 
 import { useUI } from "./providers";
-import { MiniCabinet, TubeGlow } from "./props";
+import { MiniCabinet } from "./props";
 import { Globe, External } from "./icons";
 import { links, site, chain } from "@/lib/config";
 import { localeNames, locales } from "@/lib/i18n";
@@ -74,7 +74,7 @@ export function Footer() {
   return (
     <footer className="border-t" style={{ borderColor: "var(--rule)" }}>
       <div className="mx-auto max-w-[1240px] px-4 py-10 sm:px-6">
-        <div className="flex flex-wrap items-start justify-between gap-8">
+        <div className="flex items-start justify-between gap-6">
           <nav className="flex gap-10" aria-label="Footer">
             <ul className="space-y-2">
               <li>
@@ -122,10 +122,7 @@ export function Footer() {
             </ul>
           </nav>
 
-          <div className="flex flex-col items-center gap-1">
-            <TubeGlow className="w-[200px]" />
-            <MiniCabinet className="mt-2 h-[170px] w-auto" />
-          </div>
+          <MiniCabinet className="h-[150px] w-auto shrink-0 sm:h-[180px]" />
         </div>
 
         <p className="data mt-10 text-[11px] text-ink-3">
