@@ -1047,6 +1047,7 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
     const ndc = new THREE.Vector2(2, 2);
     let hoverIdx: number | null = null;
     let pageGlitchTimer = 0;
+    let pointerHeld = false;
 
     function pick(): number | null {
       raycaster.setFromCamera(ndc, camera);
@@ -1060,12 +1061,14 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
             const local = cabs[idx].group.worldToLocal(h.point.clone());
             if (Math.abs(local.x) > 0.72 && (local.y > 3.6 || local.y < 0.8)) {
               cabs[idx].glitchUntil = performance.now() / 1000 + 0.5;
-              // The whole page catches the fault and keeps convulsing for as
-              // long as the corner is being poked.
-              const body = document.body;
-              body.classList.add("page-glitch");
-              window.clearTimeout(pageGlitchTimer);
-              pageGlitchTimer = window.setTimeout(() => body.classList.remove("page-glitch"), 320);
+              // Hovering a corner only rattles the machine. Holding it down
+              // is what faults the whole page, for as long as it's held.
+              if (pointerHeld) {
+                const body = document.body;
+                body.classList.add("page-glitch");
+                window.clearTimeout(pageGlitchTimer);
+                pageGlitchTimer = window.setTimeout(() => body.classList.remove("page-glitch"), 320);
+              }
             }
             return idx;
           }
@@ -1087,8 +1090,12 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       if (hit != null) onSelectRef.current(hit);
       else if (selectedRef.current != null) onSelectRef.current(null);
     };
+    const onDown = () => (pointerHeld = true);
+    const onUp = () => (pointerHeld = false);
     renderer.domElement.addEventListener("pointermove", onMove, { passive: true });
     renderer.domElement.addEventListener("click", onClick);
+    renderer.domElement.addEventListener("pointerdown", onDown, { passive: true });
+    window.addEventListener("pointerup", onUp, { passive: true });
 
     // ── Camera targets ────────────────────────────────────────────────────
     const camTarget = CAM_DEFAULT.clone();
@@ -1265,9 +1272,10 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       // Poked corners shake the whole camera, not just the cabinet.
       const anyRattle = !reduced && cabs.some((c) => performance.now() / 1000 < c.glitchUntil);
       if (anyRattle) {
-        camera.position.x += (Math.random() - 0.5) * 0.07;
-        camera.position.y += (Math.random() - 0.5) * 0.06;
-        camera.rotation.z += (Math.random() - 0.5) * 0.008;
+        const amp = pointerHeld ? 1 : 0.3;
+        camera.position.x += (Math.random() - 0.5) * 0.07 * amp;
+        camera.position.y += (Math.random() - 0.5) * 0.06 * amp;
+        camera.rotation.z += (Math.random() - 0.5) * 0.008 * amp;
       }
 
       renderer.render(scene, camera);
@@ -1299,8 +1307,8 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      CAM_DEFAULT.z = camera.aspect < 0.9 ? 13 : 10.6;
-      camera.fov = camera.aspect < 0.9 ? 55 : 45;
+      CAM_DEFAULT.z = camera.aspect < 0.7 ? 16.5 : camera.aspect < 0.9 ? 14.5 : 10.6;
+      camera.fov = camera.aspect < 0.9 ? 58 : 45;
       camera.updateProjectionMatrix();
     }
     resize();
@@ -1325,6 +1333,8 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       document.removeEventListener("visibilitychange", onVis);
       renderer.domElement.removeEventListener("pointermove", onMove);
       renderer.domElement.removeEventListener("click", onClick);
+      renderer.domElement.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointerup", onUp);
       renderer.dispose();
       scene.traverse((obj) => {
         if (obj instanceof THREE.Mesh) obj.geometry.dispose();

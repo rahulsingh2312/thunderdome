@@ -1,6 +1,7 @@
 "use client";
 
 import { useUI } from "./providers";
+import { TubeGlow } from "./props";
 import { Globe, External } from "./icons";
 import { links, site, chain } from "@/lib/config";
 import { localeNames, locales } from "@/lib/i18n";
@@ -21,12 +22,12 @@ export function Header() {
             alt={site.name}
             width={76}
             height={76}
-            className="h-[76px] w-auto transition-transform duration-150 hover:scale-110"
+            className="h-[56px] w-auto transition-transform duration-150 hover:scale-110 sm:h-[76px]"
             style={{ filter: "drop-shadow(0 0 12px color-mix(in srgb, var(--pop) 45%, transparent))" }}
           />
         </a>
 
-        <nav className="ml-2 hidden items-center gap-1 md:flex" aria-label="Sections">
+        <nav className="ml-0.5 flex items-center gap-0 overflow-x-auto md:ml-2 md:gap-1" aria-label="Sections">
           {[
             { href: "/#arena", key: "nav.arena" },
             { href: "/#board", key: "nav.board" },
@@ -36,7 +37,7 @@ export function Header() {
             <a
               key={l.href}
               href={l.href}
-              className="label rounded-[3px] px-2.5 py-2 text-[11px] text-ink-2 transition-colors duration-150 hover:text-ink" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}
+              className="label shrink-0 rounded-[3px] px-1.5 py-2 text-[9px] text-ink-2 transition-colors duration-150 hover:text-ink sm:px-2.5 sm:text-[11px]" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}
             >
               {t(l.key as "nav.arena")}
             </a>
@@ -120,6 +121,12 @@ export function Footer() {
               </li>
             </ul>
           </nav>
+
+          <div className="flex flex-col items-center gap-1">
+            <TubeGlow className="w-[200px]" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/lockup.png" alt="" width={150} height={150} className="mt-2 h-auto w-[130px] opacity-90" />
+          </div>
         </div>
 
         <p className="data mt-10 text-[11px] text-ink-3">
