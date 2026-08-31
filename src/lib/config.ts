@@ -36,8 +36,8 @@ export const launch = {
 export const chain = {
   name: "Solana",
   cluster: "mainnet-beta",
-  rpc: process.env.SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com",
-  rpcPublic: process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com",
+  rpc: process.env.SOLANA_RPC_URL ?? "https://solana-rpc.publicnode.com",
+  rpcPublic: process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://solana-rpc.publicnode.com",
   explorer: "https://solscan.io",
 } as const;
 

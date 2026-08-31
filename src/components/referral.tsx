@@ -87,12 +87,10 @@ export function Referral() {
     })();
   }, [loadBoard]);
 
-  if (!me || !myId) return null;
-
-  const link = `${site.url}/?ref=${me.code}`;
+  const link = me ? `${site.url}/?ref=${me.code}` : `${site.url}/`;
   const cooldownMs = points.claimCooldownHours * 3600 * 1000;
-  const nextClaimIn = me.lastClaim ? me.lastClaim + cooldownMs - Date.now() : 0;
-  const canClaim = nextClaimIn <= 0;
+  const nextClaimIn = me?.lastClaim ? me.lastClaim + cooldownMs - Date.now() : 0;
+  const canClaim = me != null && nextClaimIn <= 0;
 
   const copy = async () => {
     try {
@@ -129,12 +127,12 @@ export function Referral() {
             <div>
               <dt className="label text-[11px] text-ink-3">{t("ref.points")}</dt>
               <dd className="data mt-1.5 text-[34px] leading-none tabular-nums" style={{ color: "var(--pop)" }}>
-                {integer(me.points)}
+                {me ? integer(me.points) : "…"}
               </dd>
             </div>
             <div>
               <dt className="label text-[11px] text-ink-3">{t("ref.refs")}</dt>
-              <dd className="data mt-1.5 text-[34px] leading-none tabular-nums">{integer(me.refs)}</dd>
+              <dd className="data mt-1.5 text-[34px] leading-none tabular-nums">{me ? integer(me.refs) : "…"}</dd>
             </div>
           </dl>
 
@@ -150,9 +148,9 @@ export function Referral() {
           </button>
 
           <p className="measure mt-4 text-[13px] leading-relaxed text-ink-3">{t("ref.how")}</p>
-          {me.referredBy && (
+          {me?.referredBy && (
             <p className="data mt-1 text-[12px] text-ink-3">
-              {t("ref.invited")}: {me.referredBy}
+              {t("ref.invited")}: {me?.referredBy}
             </p>
           )}
 
@@ -192,7 +190,7 @@ export function Referral() {
                   <span className="data flex-1 text-[13px]">
                     {row.code}
                     {row.paper && <span className="ml-1.5 text-[8px] text-ink-3">paper</span>}
-                    {row.code === me.code && (
+                    {me && row.code === me.code && (
                       <span className="label ml-2 text-[9px]" style={{ color: "var(--pop)" }}>
                         <Lamp size={7} className="mr-1 inline" />
                         YOU

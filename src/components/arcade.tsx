@@ -73,7 +73,7 @@ function grungeTexture(seed: number): THREE.CanvasTexture {
   const c = document.createElement("canvas");
   c.width = c.height = 256;
   const g = c.getContext("2d")!;
-  g.fillStyle = "#1a2925";
+  g.fillStyle = "#8f938e";
   g.fillRect(0, 0, 256, 256);
   let r = seed;
   const rnd = () => ((r = (r * 16807) % 2147483647) / 2147483647);
@@ -339,13 +339,18 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       powerAt: number;
       powered: boolean;
       hovered: boolean;
+      glitchUntil: number;
     };
 
     const glowTex = radialGlowTexture();
-    const bodyMats = channels.map((_, i) =>
-      new THREE.MeshStandardMaterial({ map: grungeTexture(i * 17 + 7), color: i % 2 ? 0x9c948a : 0xb8b0a4, roughness: 0.85 }),
-    );
-    const deckMat = new THREE.MeshStandardMaterial({ map: grungeTexture(53), color: 0xaaa298, roughness: 0.75 });
+    // Each cabinet is painted in its channel colour; grunge rides on top.
+    const bodyMats = channels.map((c, i) => {
+      const paint = new THREE.Color(
+        getComputedStyle(document.documentElement).getPropertyValue(`--ch-${c.ch}`).trim() || "#888",
+      ).multiplyScalar(0.72);
+      return new THREE.MeshStandardMaterial({ map: grungeTexture(i * 17 + 7), color: paint, roughness: 0.8 });
+    });
+    const deckMat = new THREE.MeshStandardMaterial({ map: grungeTexture(53), color: 0x565b57, roughness: 0.75 });
     const bezelMat = new THREE.MeshStandardMaterial({ color: 0x0c1512, roughness: 0.6 });
     const stickMat = new THREE.MeshStandardMaterial({ color: 0x101a17, roughness: 0.5 });
 
@@ -538,8 +543,74 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
         powerAt: reduced ? 0 : 2.0 + i * 0.32,
         powered: reduced,
         hovered: false,
+        glitchUntil: 0,
       };
     });
+
+    // ── Abandoned-arcade set dressing ────────────────────────────────────
+    // A rusted drum barrel, stage left.
+    {
+      const barrel = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.75, 0.75, 1.7, 18),
+        new THREE.MeshStandardMaterial({ map: grungeTexture(101), color: 0x8a4a22, roughness: 0.9 }),
+      );
+      barrel.position.set(-9.6, 0.85, 2.6);
+      barrel.rotation.y = 0.7;
+      scene.add(barrel);
+      const barrel2 = barrel.clone();
+      barrel2.position.set(-8.4, 0.85, 3.6);
+      barrel2.rotation.z = Math.PI / 2;
+      barrel2.position.y = 0.78;
+      scene.add(barrel2);
+    }
+    // A dead sofa, stage right, sagging.
+    {
+      const sofaMat = new THREE.MeshStandardMaterial({ map: grungeTexture(77), color: 0x5a3a4a, roughness: 1 });
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.7, 1.3), sofaMat);
+      seat.position.set(9.4, 0.45, 3.2);
+      seat.rotation.y = -0.5;
+      seat.rotation.z = 0.04;
+      scene.add(seat);
+      const back = new THREE.Mesh(new THREE.BoxGeometry(3.2, 1.1, 0.35), sofaMat);
+      back.position.set(9.8, 1.15, 2.75);
+      back.rotation.y = -0.5;
+      back.rotation.x = -0.12;
+      scene.add(back);
+      for (const dx of [-1.25, 1.25]) {
+        const arm = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.9, 1.3), sofaMat);
+        arm.position.set(9.4 + Math.cos(-0.5) * dx, 0.65, 3.2 + Math.sin(-0.5) * dx * -1);
+        arm.rotation.y = -0.5;
+        scene.add(arm);
+      }
+    }
+    // A dead cabinet, unplugged, leaning against the wall.
+    {
+      const dead = new THREE.Mesh(
+        new THREE.BoxGeometry(1.9, 3.2, 1.3),
+        new THREE.MeshStandardMaterial({ map: grungeTexture(55), color: 0x2c2f2c, roughness: 0.95 }),
+      );
+      dead.position.set(-11.8, 1.5, 0.4);
+      dead.rotation.z = 0.14;
+      dead.rotation.y = 0.5;
+      scene.add(dead);
+    }
+    // The broken bulb: hangs from the dark, buzzes, mostly fails.
+    const bulbPivot = new THREE.Group();
+    bulbPivot.position.set(6.2, 7.4, 1.2);
+    const cord = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.015, 0.015, 2.6, 6),
+      new THREE.MeshStandardMaterial({ color: 0x0b0f0d, roughness: 1 }),
+    );
+    cord.position.y = -1.3;
+    bulbPivot.add(cord);
+    const bulbMat = new THREE.MeshBasicMaterial({ color: 0xffe9b0, transparent: true, opacity: 0.15 });
+    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 12), bulbMat);
+    bulb.position.y = -2.72;
+    bulbPivot.add(bulb);
+    const bulbLight = new THREE.PointLight(0xffdf9e, 0, 12, 1.8);
+    bulbLight.position.y = -2.72;
+    bulbPivot.add(bulbLight);
+    scene.add(bulbPivot);
 
     // Cables snaking on the floor.
     for (let k = 0; k < 4; k++) {
@@ -606,6 +677,7 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
 
       const isSel = selectedRef.current === i;
       const hot = cab.hovered || isSel;
+      const cornerGlitch = performance.now() / 1000 < cab.glitchUntil;
       g.fillStyle = hot ? "#07200f" : "#04140b";
       g.fillRect(0, 0, w, h);
 
@@ -702,8 +774,8 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
 
       // Glitch: on a switch (and rarely at random) shear a few slices sideways.
       const spontaneous = !reduced && Math.sin(t * 1.1 + i * 3.7) > 0.995;
-      if (switching || spontaneous) {
-        const n = switching ? 5 : 3;
+      if (switching || spontaneous || cornerGlitch) {
+        const n = cornerGlitch ? 7 : switching ? 5 : 3;
         for (let k = 0; k < n; k++) {
           const sy = Math.floor(((Math.sin(t * 31 + k * 17 + i) + 1) / 2) * (h - 12));
           const sh = 4 + Math.floor(((Math.sin(t * 23 + k * 7) + 1) / 2) * 8);
@@ -742,7 +814,15 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       for (const h of hits) {
         let o: THREE.Object3D | null = h.object;
         while (o) {
-          if (o.userData.cab !== undefined) return o.userData.cab as number;
+          if (o.userData.cab !== undefined) {
+            const idx = o.userData.cab as number;
+            // Touching a corner rattles the machine: signal hates being poked.
+            const local = cabs[idx].group.worldToLocal(h.point.clone());
+            if (Math.abs(local.x) > 0.72 && (local.y > 2.7 || local.y < 0.7)) {
+              cabs[idx].glitchUntil = performance.now() / 1000 + 0.5;
+            }
+            return idx;
+          }
           o = o.parent;
         }
       }
@@ -798,6 +878,15 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       elapsed += dt;
       const t = elapsed;
 
+      // The broken bulb: long dead spells, then a desperate buzz.
+      const buzzCycle = t % 7.3;
+      const buzzing = buzzCycle > 5.6 && buzzCycle < 6.4;
+      const buzz = buzzing ? (Math.sin(t * 55) > -0.2 ? 1 : 0.15) : 0.04;
+      bulbLight.intensity = buzz * 9;
+      bulbMat.opacity = 0.12 + buzz * 0.75;
+      bulbPivot.rotation.z = Math.sin(t * 0.7) * 0.06;
+      bulbPivot.rotation.x = Math.cos(t * 0.53) * 0.05;
+
       const flick = tubeIntensity(t);
       tubeLight.intensity = flick * 55;
       tubeMat.opacity = 0.15 + flick * 0.85;
@@ -828,7 +917,11 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
             ? 0.25
             : 1;
         const hotness = cab.hovered || sel ? 1 : 0.62;
-        for (const m of cab.edgeMats) m.opacity = 0.9 * on * flickN * hotness;
+        const rattling = performance.now() / 1000 < cab.glitchUntil;
+        const baseX = (i - (roster.length - 1) / 2) * SPACING;
+        cab.group.position.x = baseX + (rattling ? (Math.random() - 0.5) * 0.08 : 0);
+        cab.group.rotation.z = rattling ? (Math.random() - 0.5) * 0.015 : 0;
+        for (const m of cab.edgeMats) m.opacity = 0.9 * on * flickN * hotness * (rattling && Math.random() < 0.4 ? 0.25 : 1);
         cab.heatMat.opacity = 0.16 * on * flickN * (cab.hovered || sel ? 1.6 : 1);
         const scaleTarget = cab.hovered && sel === false ? 1.02 : 1;
         const sc = cab.group.scale.x + (scaleTarget - cab.group.scale.x) * Math.min(1, dt * 8);

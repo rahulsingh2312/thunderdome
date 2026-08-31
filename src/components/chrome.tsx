@@ -10,12 +10,8 @@ export function Header() {
 
   return (
     <header
-      className="sticky top-0 z-50 backdrop-blur-xl"
-      style={{
-        borderBottom: "1px solid color-mix(in srgb, var(--pop) 25%, transparent)",
-        background: "color-mix(in srgb, var(--ground) 72%, transparent)",
-        boxShadow: "0 8px 30px -18px color-mix(in srgb, var(--pop) 45%, transparent)",
-      }}
+      className="sticky top-0 z-50"
+      style={{ background: "transparent" }}
     >
       <div className="mx-auto flex max-w-[1240px] items-center gap-2 px-3 py-3 sm:gap-3 sm:px-6">
         <a href="#top" className="flex shrink-0 items-center" aria-label={`${site.name} home`}>
@@ -35,11 +31,12 @@ export function Header() {
             { href: "#arena", key: "nav.arena" },
             { href: "#board", key: "nav.board" },
             { href: "#ref", key: "nav.ref" },
+            { href: "/whitepaper", key: "nav.paper" },
           ].map((l) => (
             <a
               key={l.href}
               href={l.href}
-              className="label rounded-[3px] px-2.5 py-2 text-[11px] text-ink-2 transition-colors duration-150 hover:text-ink"
+              className="label rounded-[3px] px-2.5 py-2 text-[11px] text-ink-2 transition-colors duration-150 hover:text-ink" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}
             >
               {t(l.key as "nav.arena")}
             </a>
@@ -79,6 +76,11 @@ export function Footer() {
         <div className="flex flex-wrap items-start justify-between gap-8">
           <nav className="flex gap-10" aria-label="Footer">
             <ul className="space-y-2">
+              <li>
+                <a href="/whitepaper" className="text-[13px] text-ink-2 hover:text-ink">
+                  {t("nav.paper")}
+                </a>
+              </li>
               <li>
                 <a href={links.privacy} className="text-[13px] text-ink-2 hover:text-ink">
                   {t("foot.privacy")}

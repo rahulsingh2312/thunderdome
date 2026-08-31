@@ -12,6 +12,7 @@ const en = {
   "nav.arena": "Arcade",
   "nav.board": "Board",
   "nav.ref": "Referral",
+  "nav.paper": "Whitepaper",
   "nav.theme": "Switch theme",
   "nav.lang": "Switch language",
 
@@ -106,6 +107,7 @@ const zh: Partial<Record<Key, string>> = {
   "nav.arena": "街机厅",
   "nav.board": "排行",
   "nav.ref": "邀请",
+  "nav.paper": "白皮书",
   "nav.theme": "切换主题",
   "nav.lang": "切换语言",
 

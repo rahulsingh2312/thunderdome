@@ -25,7 +25,7 @@ function SolAmount({ children, size = 12 }: { children: React.ReactNode; size?: 
   return (
     <span className="inline-flex items-center gap-1 tabular-nums">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/tokens/sol.png" alt="SOL" width={size} height={size} style={{ width: size, height: size }} />
+      <img src="/tokens/sol-mark.svg" alt="SOL" width={size} height={size} style={{ width: size, height: Math.round(size * 0.78) }} />
       {children}
     </span>
   );
@@ -135,13 +135,9 @@ export function Stage({ initial }: { initial: ArenaView }) {
     let alive = true;
     const read = async () => {
       try {
-        const res = await fetch(chain.rpcPublic, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getBalance", params: [account] }),
-        });
-        const j = (await res.json()) as { result?: { value?: number } };
-        if (alive && typeof j.result?.value === "number") setBalance(BigInt(j.result.value));
+        const res = await fetch(`/api/balance?addr=${account}`, { cache: "no-store" });
+        const j = (await res.json()) as { lamports?: number };
+        if (alive && typeof j.lamports === "number") setBalance(BigInt(j.lamports));
       } catch {}
     };
     read();
@@ -351,8 +347,7 @@ export function Stage({ initial }: { initial: ArenaView }) {
             alt={site.name}
             width={300}
             height={300}
-            className="h-auto w-[min(38vw,230px)]"
-            style={{ filter: "drop-shadow(0 0 26px rgba(239, 255, 94, 0.45))" }}
+            className="logo3d h-auto w-[min(38vw,230px)]"
           />
           <span className="sr-only">{site.name}</span>
         </h1>
