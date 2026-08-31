@@ -107,7 +107,7 @@ export function Board({ rows, armed, startingCapital }: { rows: BoardRow[]; arme
                       }}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={r.logo} alt={`${r.maker} logo`} width={22} height={22} className="h-[22px] w-[22px] object-contain" />
+                      <img src={r.logo.replace("/logos/", "/logos/dark/")} alt={`${r.maker} logo`} width={22} height={22} className="h-[22px] w-[22px] object-contain" />
                     </span>
                     <div className="min-w-0">
                       <div className="label truncate text-[13px]">{r.label}</div>
