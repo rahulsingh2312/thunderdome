@@ -4,16 +4,16 @@
 :root {
   color-scheme: dark;
 
-  --ground: #05070d;
+  --ground: #060a12;
   --ground-2: #0a0f1a;
   --panel: #0b111dcc;
   --ink: #e8f4ff;
   --ink-2: #9db4cc;
   --ink-3: #64809c;
-  --rule: #1c3550;
-  --rule-soft: #12233a;
-  --holo: #35e0ff;
-  --pop: #35e0ff;
+  --rule: #1c4a3e;
+  --rule-soft: #123529;
+  --holo: #1cf3b7;
+  --pop: #1cf3b7;
   --pop-ink: #05070d;
 
   --up: #3dff8c;
@@ -27,9 +27,9 @@
   --ch-6: #6a8dff;
 
   --glow: 1;
-  --panel-glow: 0 0 28px -10px rgb(53 224 255 / 0.28);
+  --panel-glow: 0 0 28px -10px rgb(28 243 183 / 0.28);
   --scanline: rgb(232 244 255 / 0.028);
-  --selection: #0e3a52;
+  --selection: #0e5240;
   --r: 3px;
 }
 

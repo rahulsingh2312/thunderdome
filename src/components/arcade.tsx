@@ -504,7 +504,7 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       });
       // One side tag on every other machine.
       if (i % 2 === 0) {
-        const tagTexts = ["WAGMI", "GG", "$DOME"];
+        const tagTexts = ["WAGMI", "GG", "$ARENA"];
         const tag = new THREE.Mesh(
           new THREE.PlaneGeometry(1.0, 0.5),
           new THREE.MeshStandardMaterial({

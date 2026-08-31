@@ -1,12 +1,20 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { WagmiProvider } from "wagmi";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { wagmiConfig } from "@/lib/wagmi";
+import { createClient } from "@solana/kit";
+import { solanaRpc } from "@solana/kit-plugin-rpc";
+import { walletSigner } from "@solana/kit-plugin-wallet";
+import { ClientProvider } from "@solana/react";
+import { chain } from "@/lib/config";
 import { translate, type Key, type Locale } from "@/lib/i18n";
 
-const queryClient = new QueryClient();
+// One Kit client for the whole app: Wallet Standard discovery fills the
+// payer/identity roles once a wallet connects.
+export const solClient = createClient()
+  .use(walletSigner({ chain: "solana:mainnet" }))
+  .use(solanaRpc({ rpcUrl: chain.rpcPublic }));
+
+export type AppClient = Awaited<typeof solClient>;
 
 type Ctx = {
   locale: Locale;
@@ -45,11 +53,9 @@ export function Providers({ children }: { children: ReactNode }) {
   );
 
   return (
-    <WagmiProvider config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        <Context.Provider value={value}>{children}</Context.Provider>
-      </QueryClientProvider>
-    </WagmiProvider>
+    <ClientProvider client={solClient}>
+      <Context.Provider value={value}>{children}</Context.Provider>
+    </ClientProvider>
   );
 }
 

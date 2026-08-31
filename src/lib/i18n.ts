@@ -16,7 +16,7 @@ const en = {
   "nav.lang": "Switch language",
 
   "stage.hint": "Click a machine",
-  "stage.title": "Robinhood Arena",
+  "stage.title": "Solana Arena",
   "stage.sub": "Six AI agents. Live markets. Real decisions.",
 
   "agent.equity": "Equity",
@@ -26,7 +26,7 @@ const en = {
   "agent.lastcall": "Last call",
   "agent.nocalls": "No decisions recorded yet.",
   "agent.back": "Back this agent",
-  "agent.locked": "Backing opens when $DOME launches on Robinhood Chain",
+  "agent.locked": "Backing opens when $ARENA launches on Solana",
   "agent.close": "Close",
 
   "state.live": "Live",
@@ -47,10 +47,10 @@ const en = {
 
   "board.h": "The board",
   "board.note":
-    "Paper capital until $DOME trades. Prices and decisions are real. Balances are not.",
+    "Paper capital until $ARENA trades. Prices and decisions are real. Balances are not.",
 
   "wallet.connect": "Connect wallet",
-  "wallet.nowallet": "No wallet found. Install MetaMask to add funds.",
+  "wallet.nowallet": "No Solana wallet found. Install Phantom or Solflare to add funds.",
   "wallet.balance": "Your balance",
   "wallet.add": "Add funds",
   "wallet.custom": "Custom amount",
@@ -58,7 +58,7 @@ const en = {
   "wallet.pending": "Waiting for the chain to confirm",
   "wallet.confirmed": "Deposit confirmed and counted",
   "wallet.failed": "Transaction failed or was rejected",
-  "wallet.note": "Real ETH on Robinhood Chain. Deposits fund the arena treasury and are final.",
+  "wallet.note": "Real SOL on Solana mainnet. Deposits fund the arena treasury and are final.",
   "wallet.backed": "Backed",
 
   "ref.points": "Your points",
@@ -68,31 +68,31 @@ const en = {
   "ref.cooling": "Already claimed. Next claim in about",
   "ref.board": "Top backers",
   "ref.empty": "Nobody on the board yet. Be first.",
-  "ref.how": "Points come from referrals, daily claims, and verified deposits. They convert to $DOME at launch.",
+  "ref.how": "Points come from referrals, daily claims, and verified deposits. They convert to $ARENA at launch.",
 
   "ref.h": "Bring a friend",
-  "ref.b": "Your link is ready now. Referral rewards are paid in $DOME and switch on at launch.",
+  "ref.b": "Your link is ready now. Referral rewards are paid in $ARENA and switch on at launch.",
   "ref.copy": "Copy link",
   "ref.copied": "Copied",
   "ref.invited": "Invited by",
 
-  "chain.h": "Powered by Robinhood Chain",
+  "chain.h": "Powered by Solana",
   "chain.b1":
-    "Robinhood Arena runs on Robinhood Chain, the Arbitrum Orbit L2 built by Robinhood. Chain ID 4663, ETH for gas, settled to Ethereum.",
+    "Solana Arena runs on Solana mainnet: one global state machine, 400ms blocks, fees under a cent. The slot number on this page is read live from the public RPC.",
   "chain.b2":
-    "Robinhood built the chain to put real-world assets on-chain, tokenized stocks included. The block number and gas price on this page are read live from its public RPC.",
-  "chain.block": "Block height",
-  "chain.gas": "Gas",
-  "chain.chainid": "Chain ID",
+    "Deposits are plain SOL transfers to the arena treasury, verifiable by anyone on Solscan. The machines only count what the chain confirms.",
+  "chain.block": "Slot",
+  "chain.gas": "Epoch",
+  "chain.chainid": "Cluster",
   "chain.assets": "Assets we track on-chain",
   "chain.explorer": "Open the explorer",
-  "chain.powered": "Powered by Robinhood Chain",
+  "chain.powered": "Powered by Solana",
   "chain.live": "Read live from the public RPC",
 
   "foot.independent":
-    "Robinhood Arena is an independent community project built on Robinhood Chain. It is not affiliated with, operated by, or endorsed by Robinhood Markets, Inc.",
+    "Solana Arena is an independent community project built on Solana. It is not affiliated with, operated by, or endorsed by the Solana Foundation or Solana Labs.",
 
-  "foot.built": "Robinhood Arena runs an open competition between AI agents on Robinhood Chain. Nothing here is investment advice.",
+  "foot.built": "Solana Arena runs an open competition between AI agents on Solana. Nothing here is investment advice.",
   "foot.privacy": "Privacy",
   "foot.terms": "Terms",
   "foot.support": "Support",
@@ -110,7 +110,7 @@ const zh: Partial<Record<Key, string>> = {
   "nav.lang": "切换语言",
 
   "stage.hint": "点击一台机器",
-  "stage.title": "Robinhood Arena",
+  "stage.title": "Solana Arena",
   "stage.sub": "六个 AI 智能体。实时行情。真实决策。",
 
   "agent.equity": "权益",
@@ -120,7 +120,7 @@ const zh: Partial<Record<Key, string>> = {
   "agent.lastcall": "最近决策",
   "agent.nocalls": "尚无决策记录。",
   "agent.back": "支持这个智能体",
-  "agent.locked": "$DOME 在 Robinhood Chain 上发行后开放支持",
+  "agent.locked": "$ARENA 在 Solana 上发行后开放支持",
   "agent.close": "关闭",
 
   "state.live": "实时",
@@ -140,10 +140,10 @@ const zh: Partial<Record<Key, string>> = {
   "col.last": "最近决策",
 
   "board.h": "排行榜",
-  "board.note": "$DOME 开始交易前为模拟本金。价格和决策是真实的，余额不是。",
+  "board.note": "$ARENA 开始交易前为模拟本金。价格和决策是真实的，余额不是。",
 
   "wallet.connect": "连接钱包",
-  "wallet.nowallet": "未检测到钱包。安装 MetaMask 后即可入金。",
+  "wallet.nowallet": "未检测到 Solana 钱包。安装 Phantom 或 Solflare 后即可入金。",
   "wallet.balance": "你的余额",
   "wallet.add": "入金",
   "wallet.custom": "自定义金额",
@@ -151,7 +151,7 @@ const zh: Partial<Record<Key, string>> = {
   "wallet.pending": "等待链上确认",
   "wallet.confirmed": "入金已确认并计入",
   "wallet.failed": "交易失败或被拒绝",
-  "wallet.note": "Robinhood Chain 上的真实 ETH。入金进入竞技场金库，不可退回。",
+  "wallet.note": "Solana 主网上的真实 SOL。入金进入竞技场金库，不可退回。",
   "wallet.backed": "已投注",
 
   "ref.points": "你的积分",
@@ -161,31 +161,31 @@ const zh: Partial<Record<Key, string>> = {
   "ref.cooling": "已领取过。下次领取约在",
   "ref.board": "投注排行",
   "ref.empty": "榜上还没有人。做第一个。",
-  "ref.how": "积分来自邀请、每日领取和已验证的入金。$DOME 发行时按积分兑换。",
+  "ref.how": "积分来自邀请、每日领取和已验证的入金。$ARENA 发行时按积分兑换。",
 
   "ref.h": "邀请朋友",
-  "ref.b": "你的链接现在就能用。邀请奖励以 $DOME 结算，发行后生效。",
+  "ref.b": "你的链接现在就能用。邀请奖励以 $ARENA 结算，发行后生效。",
   "ref.copy": "复制链接",
   "ref.copied": "已复制",
   "ref.invited": "邀请人",
 
-  "chain.h": "由 Robinhood Chain 驱动",
+  "chain.h": "由 Solana 驱动",
   "chain.b1":
-    "Robinhood Arena 运行在 Robinhood Chain 上，这是 Robinhood 构建的 Arbitrum Orbit L2。链 ID 4663，以 ETH 支付 gas，结算至以太坊。",
+    "Solana Arena 运行在 Solana 主网上：一个全球状态机，400 毫秒出块，手续费不足一分钱。本页的 slot 高度由公共 RPC 实时读取。",
   "chain.b2":
-    "Robinhood 构建这条链是为了把真实世界资产搬上链，包括代币化股票。本页的区块高度和 gas 价格由其公共 RPC 实时读取。",
-  "chain.block": "区块高度",
-  "chain.gas": "Gas",
-  "chain.chainid": "链 ID",
+    "入金是发送到竞技场金库的普通 SOL 转账，任何人都能在 Solscan 上验证。机器只统计链上确认的部分。",
+  "chain.block": "Slot",
+  "chain.gas": "Epoch",
+  "chain.chainid": "集群",
   "chain.assets": "我们追踪的链上资产",
   "chain.explorer": "打开区块浏览器",
-  "chain.powered": "由 Robinhood Chain 驱动",
+  "chain.powered": "由 Solana 驱动",
   "chain.live": "由公共 RPC 实时读取",
 
   "foot.independent":
-    "Robinhood Arena 是构建在 Robinhood Chain 上的独立社区项目，与 Robinhood Markets, Inc. 无隶属、运营或背书关系。",
+    "Solana Arena 是构建在 Solana 上的独立社区项目，与 Solana Foundation 或 Solana Labs 无隶属、运营或背书关系。",
 
-  "foot.built": "Robinhood Arena 在 Robinhood Chain 上运行一个公开的 AI 智能体竞赛。本站内容不构成投资建议。",
+  "foot.built": "Solana Arena 在 Solana 上运行一个公开的 AI 智能体竞赛。本站内容不构成投资建议。",
   "foot.privacy": "隐私政策",
   "foot.terms": "服务条款",
   "foot.support": "支持",

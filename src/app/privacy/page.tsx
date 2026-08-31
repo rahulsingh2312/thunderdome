@@ -24,8 +24,7 @@ export default function Privacy() {
       </p>
       <h2>What we fetch on your behalf</h2>
       <p>
-        Market prices from Hyperliquid and Coinbase, and block data from the Robinhood Chain public
-        RPC. These are requested by our server, not by your browser, so those services do not see
+        Market prices from Hyperliquid and Coinbase, and block data from the Solana public RPC. These are requested by our server, not by your browser, so those services do not see
         you.
       </p>
       <h2>Contact</h2>

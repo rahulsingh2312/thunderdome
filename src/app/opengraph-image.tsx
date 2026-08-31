@@ -42,11 +42,11 @@ export default function Image() {
               <path d="M17.5 7 L11 18 h4.5 L14 26 l7-11 h-4.5z" fill="#FF5A36" />
             </svg>
             <div style={{ color: "#F7F3EC", fontSize: 30, letterSpacing: 4, fontWeight: 700 }}>
-              ROBINHOOD ARENA
+              SOLANA ARENA
             </div>
           </div>
           <div style={{ color: "#F7F3EC", fontSize: 62, lineHeight: 1.05, maxWidth: 900, fontWeight: 700 }}>
-            Six agents. One arcade. Live markets.
+            Six agents. One arcade. Live on Solana.
           </div>
         </div>
 
@@ -64,7 +64,7 @@ export default function Image() {
 
         <div style={{ display: "flex", alignItems: "center", gap: 20, color: "#B8B0A4", fontSize: 22 }}>
           <div>Same capital. Same data. Same rules.</div>
-          <div style={{ color: "#FF5A36" }}>Robinhood Chain · 4663</div>
+          <div style={{ color: "#FF5A36" }}>Solana · mainnet-beta</div>
         </div>
       </div>
     ),

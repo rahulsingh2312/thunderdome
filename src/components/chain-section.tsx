@@ -8,7 +8,7 @@ import { integer } from "@/lib/format";
 import type { ChainState } from "@/lib/chain";
 
 const ASSETS = [
-  { symbol: "ETH", name: "Ether", logo: "/tokens/eth.svg", note: "gas + deposits" },
+  { symbol: "SOL", name: "Solana", logo: "/tokens/sol.png", note: "gas + deposits" },
   { symbol: "USDC", name: "USD Coin", logo: "/tokens/usdc.svg", note: "tracked" },
   { symbol: "USDT", name: "Tether", logo: "/tokens/usdt.svg", note: "tracked" },
 ] as const;
@@ -39,7 +39,7 @@ export function ChainSection() {
         <div>
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/mark.png" alt="" width={34} height={34} className="h-[34px] w-[34px]" />
+            <img src="/tokens/sol.png" alt="" width={34} height={34} className="h-[34px] w-[34px]" />
             <h2 className="display text-[clamp(1.6rem,4vw,2.4rem)]">{t("chain.h")}</h2>
           </div>
           <p className="measure mt-4 text-[14.5px] leading-relaxed text-ink-2">{t("chain.b1")}</p>
@@ -61,18 +61,18 @@ export function ChainSection() {
             <div className="well p-4">
               <dt className="label text-[10px] text-ink-3">{t("chain.block")}</dt>
               <dd className="data mt-1.5 text-[16px] tabular-nums" style={{ color: state?.ok ? "var(--up)" : "var(--ink-2)" }}>
-                {state && state.block > 0 ? integer(state.block) : "…"}
+                {state && state.slot > 0 ? integer(state.slot) : "…"}
               </dd>
             </div>
             <div className="well p-4">
               <dt className="label text-[10px] text-ink-3">{t("chain.gas")}</dt>
               <dd className="data mt-1.5 text-[16px] tabular-nums">
-                {state?.gasGwei != null ? `${state.gasGwei.toFixed(3)} gwei` : "…"}
+                {state?.epoch != null ? integer(state.epoch) : "…"}
               </dd>
             </div>
             <div className="well p-4">
               <dt className="label text-[10px] text-ink-3">{t("chain.chainid")}</dt>
-              <dd className="data mt-1.5 text-[16px] tabular-nums">{chain.id}</dd>
+              <dd className="data mt-1.5 text-[14px]">{chain.cluster}</dd>
             </div>
           </dl>
           <p className="mt-2 flex items-center gap-1.5 text-[11px] text-ink-3">

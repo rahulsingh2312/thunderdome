@@ -8,26 +8,27 @@ import { Lamp, Warning, External, Check } from "./icons";
 import type { ArenaView } from "@/lib/engine";
 import { chain, site, treasury } from "@/lib/config";
 import { money, percent, price, truncateMiddle } from "@/lib/format";
-import { formatEther, parseEther } from "viem";
-import {
-  useAccount,
-  useBalance,
-  useConnect,
-  useDisconnect,
-  usePublicClient,
-  useSendTransaction,
-  useSwitchChain,
-} from "wagmi";
+import { address, lamports } from "@solana/kit";
+import { getTransferSolInstruction } from "@solana-program/system";
+import { useClient } from "@solana/react";
+import { useConnectedWallet, useDisconnect } from "@solana/kit-plugin-wallet/react";
+import { WalletModal } from "./wallet-modal";
+import { type AppClient } from "./providers";
 
-function formatEth(wei: bigint, digits = 4): string {
-  const [whole, frac = ""] = formatEther(wei).split(".");
-  return `${whole}.${(frac + "0".repeat(digits)).slice(0, digits)}`;
+/** Lamports → "0.0500" SOL. */
+function formatSol(l: bigint, digits = 4): string {
+  const s = l.toString().padStart(10, "0");
+  const whole = s.slice(0, -9) || "0";
+  const frac = s.slice(-9).slice(0, digits);
+  return `${whole}.${frac}`;
 }
 
-function parseEth(v: string): bigint | null {
+/** "0.05" SOL → lamports, or null when unparsable. */
+function parseSol(v: string): bigint | null {
   if (!/^\d*\.?\d*$/.test(v) || v === "" || v === ".") return null;
+  const [whole = "0", frac = ""] = v.split(".");
   try {
-    return parseEther(v);
+    return BigInt(whole) * 1_000_000_000n + BigInt((frac + "000000000").slice(0, 9));
   } catch {
     return null;
   }
@@ -35,7 +36,7 @@ function parseEth(v: string): bigint | null {
 
 const ArcadeScene = nextDynamic(() => import("./arcade"), { ssr: false });
 
-type Backing = Record<string, { totalWei: string; count: number }>;
+type Backing = Record<string, { totalLamports: string; count: number }>;
 type DepositPhase =
   | { step: "idle" }
   | { step: "sending" }
@@ -43,7 +44,7 @@ type DepositPhase =
   | { step: "done"; tx: string }
   | { step: "error"; message: string };
 
-const PRESETS = ["0.001", "0.005", "0.01"] as const;
+const PRESETS = ["0.05", "0.1", "0.25"] as const;
 
 function sparkOf(curve: { e: number }[]): number[] {
   const pts = curve.slice(-40).map((p) => p.e);
@@ -63,18 +64,38 @@ export function Stage({ initial }: { initial: ArenaView }) {
   const [phase, setPhase] = useState<DepositPhase>({ step: "idle" });
   const meRef = useRef<string | null>(null);
 
-  const { address: account, chainId } = useAccount();
-  const { connectors, connectAsync, isPending: connecting } = useConnect();
-  const { disconnect } = useDisconnect();
-  const { switchChainAsync } = useSwitchChain();
-  const { sendTransactionAsync } = useSendTransaction();
-  const publicClient = usePublicClient();
-  const { data: balanceData } = useBalance({
-    address: account,
-    chainId: chain.id,
-    query: { refetchInterval: 15_000 },
-  });
-  const balance = balanceData?.value ?? null;
+  const client = useClient<AppClient>();
+  const connected = useConnectedWallet(client);
+  const { dispatch: disconnect } = useDisconnect(client);
+  const account = connected?.account.address ?? null;
+  const [balance, setBalance] = useState<bigint | null>(null);
+  const [walletOpen, setWalletOpen] = useState(false);
+
+  // Live SOL balance from the public RPC, refreshed while connected.
+  useEffect(() => {
+    if (!account) {
+      setBalance(null);
+      return;
+    }
+    let alive = true;
+    const read = async () => {
+      try {
+        const res = await fetch(chain.rpcPublic, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getBalance", params: [account] }),
+        });
+        const j = (await res.json()) as { result?: { value?: number } };
+        if (alive && typeof j.result?.value === "number") setBalance(BigInt(j.result.value));
+      } catch {}
+    };
+    read();
+    const id = setInterval(read, 15_000);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, [account]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -113,7 +134,7 @@ export function Stage({ initial }: { initial: ArenaView }) {
   const screens = useMemo(
     () =>
       byCh.map((r) => {
-        const wei = backing[r.id]?.totalWei;
+        const l = backing[r.id]?.totalLamports;
         return {
           label: r.label,
           ch: r.ch,
@@ -121,20 +142,49 @@ export function Stage({ initial }: { initial: ArenaView }) {
           equityText: money(r.equity),
           logo: r.logo,
           spark: sparkOf(r.equityCurve),
-          backedText: wei && wei !== "0" ? `Ξ${formatEth(BigInt(wei))}` : null,
+          backedText: l && l !== "0" ? `◎${formatSol(BigInt(l))}` : null,
         };
       }),
     [byCh, backing],
   );
   const agent = selected != null ? byCh[selected] : null;
-  const agentBackedWei = agent ? BigInt(backing[agent.id]?.totalWei ?? "0") : 0n;
+  const agentBackedLamports = agent ? BigInt(backing[agent.id]?.totalLamports ?? "0") : 0n;
 
-  const doConnect = async (connectorUid: string) => {
+  const doDeposit = async () => {
+    if (!agent || !account) return;
+    const amt = parseSol(amount);
+    if (!amt || amt <= 0n) return;
+    setPhase({ step: "sending" });
     try {
-      const connector = connectors.find((c) => c.uid === connectorUid);
-      if (!connector) return;
-      await connectAsync({ connector, chainId: chain.id });
-      setPhase({ step: "idle" });
+      const ix = getTransferSolInstruction({
+        source: client.payer,
+        destination: address(treasury),
+        amount: lamports(amt),
+      });
+      const result = await client.sendTransaction([ix]);
+      const sig = result.context.signature;
+      setPhase({ step: "mining", tx: sig });
+      // Give confirmation a moment, then let the server prove it on-chain,
+      // retrying while the RPC catches up to the signature.
+      let credited = false;
+      for (let i = 0; i < 12 && !credited; i++) {
+        await new Promise((r) => setTimeout(r, 2500));
+        const res = await fetch("/api/back", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ tx: sig, machine: agent.id, me: meRef.current }),
+        });
+        if (res.ok) credited = true;
+        else if (res.status !== 409) continue;
+        else {
+          const j = (await res.json().catch(() => null)) as { error?: string } | null;
+          if (j?.error === "already credited") credited = true;
+          else if (j?.error !== "transaction not found yet") throw new Error(j?.error ?? t("wallet.failed"));
+        }
+      }
+      if (!credited) throw new Error(t("wallet.failed"));
+      await refreshBacking();
+      setPhase({ step: "done", tx: sig });
     } catch (err) {
       setPhase({
         step: "error",
@@ -143,36 +193,11 @@ export function Stage({ initial }: { initial: ArenaView }) {
     }
   };
 
-  const doDeposit = async () => {
-    if (!agent || !account) return;
-    const wei = parseEth(amount);
-    if (!wei || wei <= 0n) return;
-    setPhase({ step: "sending" });
-    try {
-      if (chainId !== chain.id) await switchChainAsync({ chainId: chain.id });
-      const tx = await sendTransactionAsync({ to: treasury, value: wei, chainId: chain.id });
-      setPhase({ step: "mining", tx });
-      const receipt = await publicClient?.waitForTransactionReceipt({ hash: tx, timeout: 180_000 });
-      if (receipt?.status !== "success") throw new Error(t("wallet.failed"));
-      await fetch("/api/back", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ tx, machine: agent.id, me: meRef.current }),
-      });
-      await refreshBacking();
-      setPhase({ step: "done", tx });
-    } catch (err) {
-      setPhase({
-        step: "error",
-        message: err instanceof Error ? err.message.slice(0, 90) : t("wallet.failed"),
-      });
-    }
-  };
-
   const busy = phase.step === "sending" || phase.step === "mining";
 
   return (
     <section id="arena" className="relative h-[92svh] min-h-[560px]">
+      <WalletModal open={walletOpen} onClose={() => setWalletOpen(false)} />
       <ArcadeScene
         className="absolute inset-0 h-full w-full"
         screens={screens}
@@ -261,7 +286,7 @@ export function Stage({ initial }: { initial: ArenaView }) {
             <div>
               <dt className="label text-[10px] text-ink-3">{t("wallet.backed")}</dt>
               <dd className="data mt-1 text-[15px] tabular-nums" style={{ color: "var(--ch-1)" }}>
-                Ξ{formatEth(agentBackedWei)}
+                ◎{formatSol(agentBackedLamports)}
               </dd>
             </div>
           </dl>
@@ -282,29 +307,20 @@ export function Stage({ initial }: { initial: ArenaView }) {
             </p>
           </div>
 
-          {/* ── Add funds: real ETH, real chain, verified on-chain ─────────── */}
+          {/* ── Add funds: real SOL, verified on-chain ─────────────────────── */}
           <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--rule)" }}>
             <h3 className="label text-[11px]" style={{ color: "var(--pop)" }}>
               {t("wallet.add")}
             </h3>
 
             {!account ? (
-              <div className="mt-3 grid gap-2">
-                {connectors.map((c) => (
-                  <button
-                    key={c.uid}
-                    onClick={() => doConnect(c.uid)}
-                    disabled={connecting}
-                    className="label lift inline-flex min-h-[44px] w-full items-center justify-center gap-2 border text-[12px] disabled:opacity-50"
-                    style={{ borderColor: "var(--pop)", color: "var(--pop)", borderRadius: "var(--r)" }}
-                  >
-                    {t("wallet.connect")}: {c.name}
-                  </button>
-                ))}
-                {connectors.length === 0 && (
-                  <p className="text-[12.5px] leading-relaxed text-ink-3">{t("wallet.nowallet")}</p>
-                )}
-              </div>
+              <button
+                onClick={() => setWalletOpen(true)}
+                className="label lift mt-3 inline-flex min-h-[46px] w-full items-center justify-center gap-2 text-[12px]"
+                style={{ background: "var(--pop)", color: "var(--pop-ink)", borderRadius: "var(--r)" }}
+              >
+                {t("wallet.connect")}
+              </button>
             ) : (
               <>
                 <div className="mt-2 flex items-center justify-between gap-2">
@@ -316,7 +332,7 @@ export function Stage({ initial }: { initial: ArenaView }) {
                     {truncateMiddle(account)}
                   </button>
                   <span className="data text-[12px] tabular-nums text-ink-2">
-                    {t("wallet.balance")}: {balance != null ? `Ξ${formatEth(balance)}` : "…"}
+                    {t("wallet.balance")}: {balance != null ? `◎${formatSol(balance)}` : "…"}
                   </span>
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -331,7 +347,7 @@ export function Stage({ initial }: { initial: ArenaView }) {
                         color: amount === p ? "var(--pop)" : "var(--ink-2)",
                       }}
                     >
-                      Ξ{p}
+                      ◎{p}
                     </button>
                   ))}
                   <input
@@ -345,11 +361,11 @@ export function Stage({ initial }: { initial: ArenaView }) {
                 </div>
                 <button
                   onClick={doDeposit}
-                  disabled={busy || !parseEth(amount)}
+                  disabled={busy || !parseSol(amount)}
                   className="label lift mt-3 inline-flex min-h-[46px] w-full items-center justify-center gap-2 text-[12px] disabled:cursor-not-allowed disabled:opacity-50"
                   style={{ background: "var(--pop)", color: "var(--pop-ink)", borderRadius: "var(--r)" }}
                 >
-                  {busy ? t("wallet.pending") : `${t("wallet.send")} · Ξ${amount}`}
+                  {busy ? t("wallet.pending") : `${t("wallet.send")} · ◎${amount}`}
                 </button>
               </>
             )}

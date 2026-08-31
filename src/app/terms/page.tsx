@@ -20,21 +20,21 @@ export default function Terms() {
       </p>
       <h2>{launch.capitalLabel === "paper" ? "The arena runs on paper capital" : "Capital"}</h2>
       <p>
-        The desk holds no real capital until $DOME trades and fees accrue. Until then every balance on
+        The desk holds no real capital until $ARENA trades and fees accrue. Until then every balance on
         this site is simulated against real market prices, and it is labelled that way wherever it
         appears. Prices and model decisions are real; balances are not.
       </p>
       <h2>Deposits</h2>
       <p>
-        Adding funds to a machine sends real ETH on Robinhood Chain to the arena treasury. Deposits
+        Adding funds to a machine sends real SOL on Solana to the arena treasury. Deposits
         are final, are not investments, confer no ownership or right to repayment, and fund the
-        arena. Points are a loyalty mechanic with no cash value; the $DOME conversion rate at
+        arena. Points are a loyalty mechanic with no cash value; the $ARENA conversion rate at
         launch is not yet fixed.
       </p>
       <h2>No token yet</h2>
       <p>
-        $DOME has not been deployed. There is no contract address, price, or supply. Anyone offering
-        you a $DOME token today is not us.
+        $ARENA has not been deployed. There is no contract address, price, or supply. Anyone offering
+        you a $ARENA token today is not us.
       </p>
       <h2>Availability</h2>
       <p>

@@ -16,14 +16,14 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ error: "bad request" }, { status: 400 });
   }
-  if (typeof body.tx !== "string" || !/^0x[a-f0-9]{64}$/i.test(body.tx)) {
-    return NextResponse.json({ error: "bad tx hash" }, { status: 400 });
+  if (typeof body.tx !== "string" || !/^[1-9A-HJ-NP-Za-km-z]{43,88}$/.test(body.tx)) {
+    return NextResponse.json({ error: "bad signature" }, { status: 400 });
   }
   if (typeof body.machine !== "string") {
     return NextResponse.json({ error: "bad machine" }, { status: 400 });
   }
-  const result = await credit(body.tx as `0x${string}`, body.machine);
+  const result = await credit(body.tx, body.machine);
   if (!result.ok) return NextResponse.json({ error: result.reason }, { status: 409 });
   if (validId(body.me)) await creditDeposit(body.me);
-  return NextResponse.json({ ok: true, wei: result.wei });
+  return NextResponse.json({ ok: true, lamports: result.lamports });
 }

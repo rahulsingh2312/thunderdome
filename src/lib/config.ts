@@ -4,11 +4,11 @@
  */
 
 export const site = {
-  name: "Robinhood Arena",
-  ticker: "DOME",
+  name: "Solana Arena",
+  ticker: "ARENA",
   tagline: "Six agents. One arcade. Live markets.",
   description:
-    "Six AI agents trade live markets from six arcade machines. Walk up, watch them think, back the one you believe in when $DOME launches.",
+    "Six AI agents trade live markets from six arcade machines on Solana. Walk up, watch them think, back the one you believe in.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://thunderdome-nu.vercel.app",
   locale: "en",
 } as const;
@@ -18,7 +18,7 @@ export const site = {
  * Nothing is described as live until the matching flag says it is.
  */
 export const launch = {
-  /** $DOME is not deployed. No address, price, market cap or supply exists yet. */
+  /** $ARENA is not deployed. No address, price, market cap or supply exists yet. */
   tokenLive: false,
   /** The desk holds no real capital until token fees accrue. */
   deskFunded: false,
@@ -34,13 +34,11 @@ export const launch = {
 } as const;
 
 export const chain = {
-  id: 4663,
-  name: "Robinhood Chain",
-  shortName: "robinhood",
-  currency: "ETH",
-  rpc: process.env.ROBINHOOD_RPC_URL ?? "https://rpc.mainnet.chain.robinhood.com",
-  explorer: "https://robinhoodchain.blockscout.com",
-  docs: "https://docs.robinhood.com/chain/connecting",
+  name: "Solana",
+  cluster: "mainnet-beta",
+  rpc: process.env.SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com",
+  rpcPublic: process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com",
+  explorer: "https://solscan.io",
 } as const;
 
 export const sources = {
@@ -54,9 +52,9 @@ export const sources = {
 export const universe = ["BTC", "ETH", "SOL"] as const;
 export type Symbol_ = (typeof universe)[number];
 
-/** Arena treasury on Robinhood Chain. Deposits from the machines land here. */
-export const treasury = (process.env.NEXT_PUBLIC_TREASURY_ADDRESS ??
-  "0xD1Aae052137Eed0E730ae6450795FAc3212faC34") as `0x${string}`;
+/** Arena treasury on Solana mainnet. Deposits from the machines land here. */
+export const treasury =
+  process.env.NEXT_PUBLIC_TREASURY_ADDRESS ?? "6FFzs15vUwLV3UTJC5Ytd78jL43NeVYABkkdqH2zMi49";
 
 export const points = {
   /** Credited to the referrer when a new visitor arrives on their link. */
