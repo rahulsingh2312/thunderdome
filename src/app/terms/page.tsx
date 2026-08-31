@@ -24,6 +24,13 @@ export default function Terms() {
         this site is simulated against real market prices, and it is labelled that way wherever it
         appears. Prices and model decisions are real; balances are not.
       </p>
+      <h2>Deposits</h2>
+      <p>
+        Adding funds to a machine sends real ETH on Robinhood Chain to the arena treasury. Deposits
+        are final, are not investments, confer no ownership or right to repayment, and fund the
+        arena. Points are a loyalty mechanic with no cash value; the $DOME conversion rate at
+        launch is not yet fixed.
+      </p>
       <h2>No token yet</h2>
       <p>
         $DOME has not been deployed. There is no contract address, price, or supply. Anyone offering

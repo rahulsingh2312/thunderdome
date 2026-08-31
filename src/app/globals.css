@@ -1,73 +1,7 @@
 @import "tailwindcss";
 
-/* ── Light: the blueprint hangar. Full token set lives on bare :root. ────── */
+/* ── Dark only. The arcade has one time of day: night. ───────────────────── */
 :root {
-  color-scheme: light;
-
-  --ground: #eef3f8;
-  --ground-2: #e2eaf2;
-  --panel: #ffffffd9;
-  --ink: #0a1626;
-  --ink-2: #3d566e;
-  --ink-3: #6d8299;
-  --rule: #b9cede;
-  --rule-soft: #d5e2ec;
-  --holo: #0b66c3;
-  --pop: #0b66c3;
-  --pop-ink: #ffffff;
-
-  --up: #0f7a3d;
-  --down: #cf3520;
-
-  --ch-1: #8a6d00;
-  --ch-2: #086a86;
-  --ch-3: #b0246e;
-  --ch-4: #5b2fc4;
-  --ch-5: #a3540c;
-  --ch-6: #2b4bc0;
-
-  --glow: 0;
-  --panel-glow: 0 10px 30px -14px rgb(10 22 38 / 0.25);
-  --scanline: rgb(10 22 38 / 0.025);
-  --selection: #cfe8fa;
-  --r: 3px;
-}
-
-/* ── Dark: the colosseum at night. The spectacle default. ────────────────── */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-
-    --ground: #05070d;
-    --ground-2: #0a0f1a;
-    --panel: #0b111dcc;
-    --ink: #e8f4ff;
-    --ink-2: #9db4cc;
-    --ink-3: #64809c;
-    --rule: #1c3550;
-    --rule-soft: #12233a;
-    --holo: #35e0ff;
-    --pop: #35e0ff;
-    --pop-ink: #05070d;
-
-    --up: #3dff8c;
-    --down: #ff5c5c;
-
-    --ch-1: #ffd23d;
-    --ch-2: #35e0ff;
-    --ch-3: #ff5ca8;
-    --ch-4: #a06bff;
-    --ch-5: #ff8a3d;
-    --ch-6: #6a8dff;
-
-    --glow: 1;
-    --panel-glow: 0 0 28px -10px rgb(53 224 255 / 0.28);
-    --scanline: rgb(232 244 255 / 0.028);
-    --selection: #0e3a52;
-  }
-}
-
-:root[data-theme="dark"] {
   color-scheme: dark;
 
   --ground: #05070d;
@@ -96,6 +30,7 @@
   --panel-glow: 0 0 28px -10px rgb(53 224 255 / 0.28);
   --scanline: rgb(232 244 255 / 0.028);
   --selection: #0e3a52;
+  --r: 3px;
 }
 
 @theme inline {
@@ -219,29 +154,30 @@ a {
 /* ── HUD material: panels with corner brackets ───────────────────────────── */
 .card,
 .card-flat {
-  position: relative;
-  background: var(--panel);
+  background-color: var(--panel);
   border: 1px solid var(--rule);
   border-radius: var(--r);
   box-shadow: var(--panel-glow);
 }
 
-.card::before {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  pointer-events: none;
-  background:
-    linear-gradient(var(--holo), var(--holo)) left 0 top 0 / 18px 2px,
-    linear-gradient(var(--holo), var(--holo)) left 0 top 0 / 2px 18px,
-    linear-gradient(var(--holo), var(--holo)) right 0 top 0 / 18px 2px,
-    linear-gradient(var(--holo), var(--holo)) right 0 top 0 / 2px 18px,
-    linear-gradient(var(--holo), var(--holo)) left 0 bottom 0 / 18px 2px,
-    linear-gradient(var(--holo), var(--holo)) left 0 bottom 0 / 2px 18px,
-    linear-gradient(var(--holo), var(--holo)) right 0 bottom 0 / 18px 2px,
-    linear-gradient(var(--holo), var(--holo)) right 0 bottom 0 / 2px 18px;
+/* Corner brackets, drawn on the element itself so no positioning is imposed. */
+.card {
+  background-image:
+    linear-gradient(var(--holo), var(--holo)),
+    linear-gradient(var(--holo), var(--holo)),
+    linear-gradient(var(--holo), var(--holo)),
+    linear-gradient(var(--holo), var(--holo)),
+    linear-gradient(var(--holo), var(--holo)),
+    linear-gradient(var(--holo), var(--holo)),
+    linear-gradient(var(--holo), var(--holo)),
+    linear-gradient(var(--holo), var(--holo));
   background-repeat: no-repeat;
-  opacity: 0.85;
+  background-position:
+    left top, left top, right top, right top,
+    left bottom, left bottom, right bottom, right bottom;
+  background-size:
+    18px 2px, 2px 18px, 18px 2px, 2px 18px,
+    18px 2px, 2px 18px, 18px 2px, 2px 18px;
 }
 
 .well {

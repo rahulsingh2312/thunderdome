@@ -1,33 +1,29 @@
 "use client";
 
 import { useUI } from "./providers";
-import { Fletch, Globe, Moon, Monitor, Sun, External } from "./icons";
+import { Fletch, Globe, External } from "./icons";
 import { links, site, chain } from "@/lib/config";
 import { localeNames, locales } from "@/lib/i18n";
 
 export function Header() {
-  const { t, theme, setTheme, locale, setLocale } = useUI();
-
-  const cycleTheme = () => setTheme(theme === "system" ? "light" : theme === "light" ? "dark" : "system");
-  const ThemeIcon = theme === "light" ? Sun : theme === "dark" ? Moon : Monitor;
+  const { t, locale, setLocale } = useUI();
 
   return (
     <header
       className="sticky top-0 z-50 border-b backdrop-blur-md"
       style={{ borderColor: "var(--rule)", background: "color-mix(in srgb, var(--ground) 88%, transparent)" }}
     >
-      <div className="mx-auto flex max-w-[1240px] items-center gap-3 px-4 py-3 sm:px-6">
+      <div className="mx-auto flex max-w-[1240px] items-center gap-2 px-3 py-3 sm:gap-3 sm:px-6">
         <a href="#top" className="flex shrink-0 items-center gap-2" aria-label={`${site.name} home`}>
           <Fletch size={20} style={{ color: "var(--pop)" }} />
-          <span className="display text-[19px] tracking-[0.04em]">{site.name}</span>
+          <span className="display text-[14px] tracking-[0.04em] sm:text-[19px]">{site.name}</span>
         </a>
 
         <nav className="ml-2 hidden items-center gap-1 md:flex" aria-label="Sections">
           {[
             { href: "#arena", key: "nav.arena" },
-            { href: "#loop", key: "nav.loop" },
-            { href: "#desk", key: "nav.desk" },
-            { href: "#token", key: "nav.token" },
+            { href: "#board", key: "nav.board" },
+            { href: "#ref", key: "nav.ref" },
           ].map((l) => (
             <a
               key={l.href}
@@ -47,13 +43,6 @@ export function Header() {
           >
             <Globe size={15} />
             {localeNames[locale]}
-          </button>
-          <button
-            onClick={cycleTheme}
-            className="flex min-h-[40px] min-w-[44px] items-center justify-center rounded-[3px] px-2 text-ink-2 transition-colors duration-150 hover:text-ink"
-            aria-label={`${t("nav.theme")} (${theme})`}
-          >
-            <ThemeIcon size={17} />
           </button>
           <a
             href={links.x}

@@ -42,11 +42,11 @@ export default function Image() {
               <path d="M17.5 7 L11 18 h4.5 L14 26 l7-11 h-4.5z" fill="#FF5A36" />
             </svg>
             <div style={{ color: "#F7F3EC", fontSize: 30, letterSpacing: 4, fontWeight: 700 }}>
-              THUNDERDOME
+              ROBINHOOD ARENA
             </div>
           </div>
           <div style={{ color: "#F7F3EC", fontSize: 62, lineHeight: 1.05, maxWidth: 900, fontWeight: 700 }}>
-            Six models enter. One allocation leaves.
+            Six agents. One arcade. Live markets.
           </div>
         </div>
 

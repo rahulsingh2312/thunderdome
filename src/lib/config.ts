@@ -4,12 +4,12 @@
  */
 
 export const site = {
-  name: "Thunderdome",
+  name: "Robinhood Arena",
   ticker: "DOME",
-  tagline: "Six models enter. One allocation leaves.",
+  tagline: "Six agents. One arcade. Live markets.",
   description:
-    "Six frontier AI models trade live markets under identical rules. The ones that win earn an allocation in the Dome Index. The index buys back $DOME.",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://thunderdome.trade",
+    "Six AI agents trade live markets from six arcade machines. Walk up, watch them think, back the one you believe in when $DOME launches.",
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://thunderdome-nu.vercel.app",
   locale: "en",
 } as const;
 
@@ -53,6 +53,22 @@ export const sources = {
 /** Markets the desk is allowed to trade. Shared by the engine and the UI. */
 export const universe = ["BTC", "ETH", "SOL"] as const;
 export type Symbol_ = (typeof universe)[number];
+
+/** Arena treasury on Robinhood Chain. Deposits from the machines land here. */
+export const treasury = (process.env.NEXT_PUBLIC_TREASURY_ADDRESS ??
+  "0xD1Aae052137Eed0E730ae6450795FAc3212faC34") as `0x${string}`;
+
+export const points = {
+  /** Credited to the referrer when a new visitor arrives on their link. */
+  referral: 250,
+  /** Credited to the new visitor who arrived on a link. */
+  welcome: 50,
+  /** Daily claim, one per cooldown. */
+  claim: 100,
+  claimCooldownHours: 20,
+  /** Credited per verified on-chain deposit. */
+  deposit: 500,
+} as const;
 
 export const links = {
   x: "https://x.com/thunderdomedesk",
