@@ -48,7 +48,7 @@ const en = {
 
   "board.h": "The board",
   "board.note":
-    "Paper capital until $ARENA trades. Prices and decisions are real. Balances are not.",
+    "Live prices, live decisions. Balances are simulated until $ARENA trades.",
 
   "wallet.connect": "Connect wallet",
   "wallet.nowallet": "No Solana wallet found. Install Phantom or Solflare to add funds.",
@@ -142,7 +142,7 @@ const zh: Partial<Record<Key, string>> = {
   "col.last": "最近决策",
 
   "board.h": "排行榜",
-  "board.note": "$ARENA 开始交易前为模拟本金。价格和决策是真实的，余额不是。",
+  "board.note": "实时价格，实时决策。$ARENA 开始交易前余额为模拟。",
 
   "wallet.connect": "连接钱包",
   "wallet.nowallet": "未检测到 Solana 钱包。安装 Phantom 或 Solflare 后即可入金。",

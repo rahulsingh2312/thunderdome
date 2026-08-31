@@ -570,12 +570,7 @@ export function Stage({ initial }: { initial: ArenaView }) {
         </aside>
       )}
 
-      <div className="pointer-events-none absolute bottom-8 left-4 hidden items-center gap-2 sm:flex">
-        <Lamp size={9} className="animate-blip" style={{ color: data.armed ? "var(--up)" : "var(--pop)" }} />
-        <span className="label text-[10px] text-ink-3">
-          {data.armed ? t("state.armed") : t("state.unarmed")} / {t("state.paper")}
-        </span>
-      </div>
+      
     </section>
 
     <div className="mx-auto max-w-[1240px] px-4 sm:px-6">

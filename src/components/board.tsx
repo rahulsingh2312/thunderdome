@@ -34,27 +34,6 @@ export function Board({ rows, armed, startingCapital }: { rows: BoardRow[]; arme
     <section id="board" className="scroll-mt-24 py-14 sm:py-20">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="display text-[clamp(1.8rem,4.5vw,2.8rem)]">{t("board.h")}</h2>
-        <div className="flex flex-wrap items-center gap-2">
-          <span
-            className="label inline-flex items-center gap-1.5 border px-2.5 py-1.5 text-[11px]"
-            style={{
-              color: armed ? "var(--up)" : "var(--pop)",
-              borderColor: "var(--rule)",
-              borderRadius: "var(--r)",
-            }}
-          >
-            {armed ? <Lamp size={8} className="animate-blip" /> : <Warning size={11} />}
-            {armed ? t("state.armed") : t("state.unarmed")}
-          </span>
-          {!launch.deskFunded && (
-            <span
-              className="label inline-flex items-center border px-2.5 py-1.5 text-[11px] text-ink-2"
-              style={{ borderColor: "var(--rule)", borderRadius: "var(--r)" }}
-            >
-              {t("state.paper")}
-            </span>
-          )}
-        </div>
       </div>
 
       <div className="card overflow-x-auto">
