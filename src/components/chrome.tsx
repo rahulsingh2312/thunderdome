@@ -14,7 +14,7 @@ export function Header() {
       style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.35), transparent)" }}
     >
       <div className="mx-auto flex max-w-[1240px] items-center gap-2 px-3 py-3 sm:gap-3 sm:px-6">
-        <a href="#top" className="flex shrink-0 items-center" aria-label={`${site.name} home`}>
+        <a href="/" className="flex shrink-0 items-center" aria-label={`${site.name} home`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/brand/lockup.png"
@@ -28,9 +28,9 @@ export function Header() {
 
         <nav className="ml-2 hidden items-center gap-1 md:flex" aria-label="Sections">
           {[
-            { href: "#arena", key: "nav.arena" },
-            { href: "#board", key: "nav.board" },
-            { href: "#ref", key: "nav.ref" },
+            { href: "/#arena", key: "nav.arena" },
+            { href: "/#board", key: "nav.board" },
+            { href: "/#ref", key: "nav.ref" },
             { href: "/whitepaper", key: "nav.paper" },
           ].map((l) => (
             <a

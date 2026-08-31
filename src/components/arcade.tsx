@@ -344,6 +344,7 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       tickerTex: THREE.CanvasTexture;
       tickerMat: THREE.MeshBasicMaterial;
       lampMats: THREE.MeshBasicMaterial[];
+      marqueeLit: boolean;
       frayGeo: THREE.BufferGeometry;
       frayMat: THREE.PointsMaterial;
       frayPos: Float32Array;
@@ -371,6 +372,7 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
     const cabs: Cab[] = roster.map((c, i) => {
       const group = new THREE.Group();
       group.position.x = (i - (roster.length - 1) / 2) * SPACING;
+      group.position.z = -((i - 1.5) * (i - 1.5)) * 0.16;
       group.rotation.y = TILT[i] ?? 0;
       group.userData.cab = i;
 
@@ -400,12 +402,43 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       mCanvas.height = 56;
       const mCtx = mCanvas.getContext("2d")!;
       const chHex = () => cssVar(`--ch-${c.ch}`) || "#35e0ff";
+      // Every sign fails its own way: 0 healthy, 1 dying flicker (repainted
+      // from the frame loop), 2 crooked with dead letters, 3 inverted backlit.
+      const marqueeStyle = i % 4;
       const drawMarquee = (lit: boolean) => {
+        if (marqueeStyle === 3 && lit) {
+          mCtx.fillStyle = chHex();
+          mCtx.fillRect(0, 0, 256, 56);
+          mCtx.font = "700 26px 'Chakra Petch', sans-serif";
+          mCtx.textAlign = "center";
+          mCtx.textBaseline = "middle";
+          mCtx.shadowColor = "transparent";
+          mCtx.fillStyle = "#04120b";
+          mCtx.fillText(c.label, 128, 30);
+          return;
+        }
         mCtx.fillStyle = "#050a08";
         mCtx.fillRect(0, 0, 256, 56);
         mCtx.font = "700 26px 'Chakra Petch', sans-serif";
-        mCtx.textAlign = "center";
         mCtx.textBaseline = "middle";
+        if (marqueeStyle === 2 && lit) {
+          // Two letters burned out for good.
+          mCtx.textAlign = "left";
+          const dead = new Set([1, Math.max(3, c.label.length - 2)]);
+          const total = mCtx.measureText(c.label).width;
+          let x = 128 - total / 2;
+          for (let k = 0; k < c.label.length; k++) {
+            const chW = mCtx.measureText(c.label[k]).width;
+            const isDead = dead.has(k);
+            mCtx.shadowColor = isDead ? "transparent" : chHex();
+            mCtx.shadowBlur = isDead ? 0 : 16;
+            mCtx.fillStyle = isDead ? "#22302b" : chHex();
+            mCtx.fillText(c.label[k], x, 30);
+            x += chW;
+          }
+          return;
+        }
+        mCtx.textAlign = "center";
         mCtx.shadowColor = lit ? chHex() : "transparent";
         mCtx.shadowBlur = lit ? 16 : 0;
         mCtx.fillStyle = lit ? chHex() : "#22302b";
@@ -423,8 +456,14 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       );
       marquee.position.set(0, 4.35, 0.59);
       group.add(marquee);
+      if (marqueeStyle === 2) {
+        marqueeBox.rotation.z = 0.045;
+        marquee.rotation.z = 0.045;
+        marquee.position.y = 4.33;
+      }
       group.userData.drawMarquee = drawMarquee;
       group.userData.mTex = mTex;
+      group.userData.marqueeStyle = marqueeStyle;
 
       // LED ticker bridging the gap between marquee and screen: a hot strip
       // of crawling arcade nonsense so the shell never reads as empty.
@@ -670,6 +709,7 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
         tickerTex,
         tickerMat,
         lampMats,
+        marqueeLit: false,
       };
     });
 
@@ -1141,6 +1181,7 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       cabs.forEach((cab, i) => {
         if (!cab.powered && t >= cab.powerAt) {
           cab.powered = true;
+          cab.marqueeLit = true;
           (cab.group.userData.drawMarquee as (lit: boolean) => void)(true);
           (cab.group.userData.mTex as THREE.CanvasTexture).needsUpdate = true;
         }
@@ -1163,6 +1204,16 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
         cab.group.rotation.y = (TILT[i] ?? 0) + (rattling ? (Math.random() - 0.5) * 0.03 : 0);
         for (const m of cab.edgeMats) m.opacity = 0.9 * on * flickN * hotness * (rattling && Math.random() < 0.4 ? 0.25 : 1);
         cab.heatMat.opacity = 0.16 * on * flickN * (cab.hovered || sel ? 1.6 : 1);
+
+        // Sign no. 2 is dying: it drops out and catches again at random.
+        if (cab.powered && (cab.group.userData.marqueeStyle as number) === 1) {
+          const litNow = Math.sin(t * 12.7 + i) * Math.sin(t * 3.1 + 1.7) > -0.72;
+          if (litNow !== cab.marqueeLit) {
+            cab.marqueeLit = litNow;
+            (cab.group.userData.drawMarquee as (lit: boolean) => void)(litNow);
+            (cab.group.userData.mTex as THREE.CanvasTexture).needsUpdate = true;
+          }
+        }
 
         // Ticker crawls; lamps blink out of phase; both die with the power.
         cab.tickerTex.offset.x = (t * 0.075 + i * 0.23) % 1;

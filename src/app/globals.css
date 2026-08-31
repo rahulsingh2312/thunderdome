@@ -319,3 +319,21 @@ a {
   100% { filter: none; transform: none; }
 }
 body.page-glitch { animation: pageglitch 0.46s steps(1) infinite; }
+
+/* A fluorescent tube on its last ballast: long holds, sudden dropouts. */
+@keyframes tubeflicker {
+  0%, 100% { opacity: 1; }
+  6% { opacity: 0.15; }
+  8% { opacity: 1; }
+  31% { opacity: 0.9; }
+  33% { opacity: 0.08; }
+  35% { opacity: 1; }
+  36.5% { opacity: 0.2; }
+  38% { opacity: 1; }
+  63% { opacity: 0.85; }
+  65% { opacity: 0.25; }
+  67% { opacity: 1; }
+  84% { opacity: 0.55; }
+  86% { opacity: 1; }
+}
+.tube-dying { animation: tubeflicker 7.2s steps(1) infinite; }

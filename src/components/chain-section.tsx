@@ -34,7 +34,7 @@ export function ChainSection() {
       } catch {}
     };
     read();
-    const id = setInterval(read, 12_000);
+    const id = setInterval(read, 30_000);
     return () => {
       alive = false;
       clearInterval(id);
@@ -62,69 +62,6 @@ export function ChainSection() {
           </div>
           <p className="measure mt-4 text-[14.5px] leading-relaxed text-ink-2">{t("chain.b1")}</p>
           <p className="measure mt-3 text-[14.5px] leading-relaxed text-ink-2">{t("chain.b2")}</p>
-          <a
-            href={`${chain.explorer}/account/${treasury}`}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="label lift mt-5 inline-flex min-h-[46px] items-center gap-2 px-5 text-[12px]"
-            style={{ background: "var(--pop)", color: "var(--pop-ink)", borderRadius: "var(--r)" }}
-          >
-            {t("chain.explorer")}
-            <External size={14} />
-          </a>
-        </div>
-
-        <div>
-          {/* The slot odometer: the loudest proof the page is wired to mainnet. */}
-          <div
-            className="well relative overflow-hidden p-5"
-            style={{ borderColor: "color-mix(in srgb, var(--pop) 40%, transparent)" }}
-          >
-            <div className="flex items-center justify-between">
-              <span className="label text-[10px] text-ink-3">{t("chain.block")}</span>
-              <span className="label flex items-center gap-1.5 text-[10px]" style={{ color: state?.ok ? "var(--up)" : "var(--pop)" }}>
-                <Lamp size={7} className="animate-blip" />
-                {t("chain.live")}
-              </span>
-            </div>
-            <div
-              className="data mt-2 text-[clamp(1.6rem,3.2vw,2.2rem)] font-bold tabular-nums leading-none"
-              style={{ color: "var(--pop)", textShadow: "0 0 18px color-mix(in srgb, var(--pop) 55%, transparent)" }}
-            >
-              {liveSlot != null ? integer(liveSlot) : state && state.slot > 0 ? integer(state.slot) : "…"}
-            </div>
-          </div>
-          <dl className="mt-3 grid grid-cols-3 gap-3">
-            <div className="well p-4">
-              <dt className="label text-[10px] text-ink-3">{t("chain.gas")}</dt>
-              <dd className="data mt-1.5 text-[16px] tabular-nums">
-                {state?.epoch != null ? integer(state.epoch) : "…"}
-              </dd>
-            </div>
-            <div className="well p-4">
-              <dt className="label text-[10px] text-ink-3">BLOCK TIME</dt>
-              <dd className="data mt-1.5 text-[16px] tabular-nums" style={{ color: "var(--up)" }}>400ms</dd>
-            </div>
-            <div className="well p-4">
-              <dt className="label text-[10px] text-ink-3">FEES</dt>
-              <dd className="data mt-1.5 text-[16px] tabular-nums" style={{ color: "var(--up)" }}>&lt;$0.01</dd>
-            </div>
-          </dl>
-          <a
-            href={`${chain.explorer}/account/${treasury}`}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="well lift mt-3 flex items-center justify-between gap-3 p-4"
-          >
-            <div className="min-w-0">
-              <div className="label text-[10px] text-ink-3">ARENA TREASURY · {chain.cluster}</div>
-              <div className="data mt-1 truncate text-[13px]" style={{ color: "var(--pop)" }}>
-                {treasury}
-              </div>
-            </div>
-            <External size={14} className="shrink-0 text-ink-3" />
-          </a>
-
           <h3 className="label mt-6 text-[11px] text-ink-3">{t("chain.assets")}</h3>
           <ul className="mt-3 grid grid-cols-3 gap-3">
             {ASSETS.map((a) => (

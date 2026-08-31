@@ -85,6 +85,17 @@ export default function Whitepaper() {
     <>
       <Header />
       <main className="relative mx-auto max-w-[820px] px-4 pb-20 pt-6 sm:px-6">
+        {/* The same tired fluorescent tube as the arcade, hung over the paper. */}
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-2 flex justify-center">
+          <div
+            className="tube-dying h-[5px] w-[min(58vw,380px)] rounded-full"
+            style={{
+              background: "#eafff0",
+              boxShadow:
+                "0 0 22px 5px rgba(216,255,228,0.55), 0 0 80px 26px rgba(216,255,228,0.22), 0 40px 120px 40px rgba(216,255,228,0.10)",
+            }}
+          />
+        </div>
         {/* props scattered in the margins */}
         <BrokenBulb className="absolute -top-2 right-[8%]" />
         <BrokenBulb className="absolute top-[38%] left-[-30px] hidden xl:block" delay={2.4} />

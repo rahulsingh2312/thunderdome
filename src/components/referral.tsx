@@ -57,7 +57,7 @@ export function Referral() {
   }, []);
 
   useEffect(() => {
-    const tick = setInterval(() => loadBoard(), 45_000);
+    const tick = setInterval(() => loadBoard(), 90_000);
     return () => clearInterval(tick);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -106,11 +106,29 @@ export function Referral() {
   })();
 
   const copy = async () => {
+    // Clipboard API first; the hidden-textarea trick for everything it fails on.
+    let ok = false;
     try {
       await navigator.clipboard.writeText(link);
+      ok = true;
+    } catch {}
+    if (!ok) {
+      const ta = document.createElement("textarea");
+      ta.value = link;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try {
+        ok = document.execCommand("copy");
+      } catch {}
+      ta.remove();
+    }
+    if (ok) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
-    } catch {}
+    }
   };
 
   const doClaim = async () => {
@@ -195,7 +213,7 @@ export function Referral() {
             <p className="mt-3 text-[13px] text-ink-3">{t("ref.empty")}</p>
           ) : (
             <ol className="mt-3">
-              {board.slice(0, showAll ? board.length : 10).map((row, i) => (
+              {board.slice(0, showAll ? board.length : 5).map((row, i) => (
                 <li
                   key={row.code}
                   className="flex items-center gap-3 border-b py-2.5 last:border-0"
@@ -220,13 +238,13 @@ export function Referral() {
               ))}
             </ol>
           )}
-          {board.length > 10 && !showAll && (
+          {board.length > 5 && !showAll && (
             <button
               onClick={() => setShowAll(true)}
               className="label mt-3 min-h-[44px] w-full border text-[11px] text-ink-2 hover:text-ink"
               style={{ borderColor: "var(--rule)", borderRadius: "var(--r)" }}
             >
-              {`SHOW MORE (${board.length - 10})`}
+              {`SHOW MORE (${board.length - 5})`}
             </button>
           )}
         </div>
