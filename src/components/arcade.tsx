@@ -446,43 +446,15 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       mCanvas.height = 56;
       const mCtx = mCanvas.getContext("2d")!;
       const chHex = () => cssVar(`--ch-${c.ch}`) || "#35e0ff";
-      // Every sign fails its own way: 0 healthy, 1 dying flicker (repainted
-      // from the frame loop), 2 crooked with dead letters, 3 inverted backlit.
-      const marqueeStyle = i % 4;
+      // The name sign stays readable on every machine; the LED tickers below
+      // are what break differently per cabinet.
+      const tickerStyle = i % 4;
       const drawMarquee = (lit: boolean) => {
-        if (marqueeStyle === 3 && lit) {
-          mCtx.fillStyle = chHex();
-          mCtx.fillRect(0, 0, 256, 56);
-          mCtx.font = "700 26px 'Chakra Petch', sans-serif";
-          mCtx.textAlign = "center";
-          mCtx.textBaseline = "middle";
-          mCtx.shadowColor = "transparent";
-          mCtx.fillStyle = "#04120b";
-          mCtx.fillText(c.label, 128, 30);
-          return;
-        }
         mCtx.fillStyle = "#050a08";
         mCtx.fillRect(0, 0, 256, 56);
         mCtx.font = "700 26px 'Chakra Petch', sans-serif";
-        mCtx.textBaseline = "middle";
-        if (marqueeStyle === 2 && lit) {
-          // Two letters burned out for good.
-          mCtx.textAlign = "left";
-          const dead = new Set([1, Math.max(3, c.label.length - 2)]);
-          const total = mCtx.measureText(c.label).width;
-          let x = 128 - total / 2;
-          for (let k = 0; k < c.label.length; k++) {
-            const chW = mCtx.measureText(c.label[k]).width;
-            const isDead = dead.has(k);
-            mCtx.shadowColor = isDead ? "transparent" : chHex();
-            mCtx.shadowBlur = isDead ? 0 : 16;
-            mCtx.fillStyle = isDead ? "#22302b" : chHex();
-            mCtx.fillText(c.label[k], x, 30);
-            x += chW;
-          }
-          return;
-        }
         mCtx.textAlign = "center";
+        mCtx.textBaseline = "middle";
         mCtx.shadowColor = lit ? chHex() : "transparent";
         mCtx.shadowBlur = lit ? 16 : 0;
         mCtx.fillStyle = lit ? chHex() : "#22302b";
@@ -491,57 +463,18 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       drawMarquee(false);
       const mTex = new THREE.CanvasTexture(mCanvas);
       mTex.colorSpace = THREE.SRGBColorSpace;
-      const nailMat = new THREE.MeshStandardMaterial({ color: 0x39413c, roughness: 0.4 });
-      if (marqueeStyle === 2) {
-        // Hanging off its last nail, swung down to one side, lights long dead.
-        const pivot = new THREE.Group();
-        pivot.position.set(-0.86, 4.58, 0);
-        pivot.rotation.z = -0.3;
-        const box = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.52, 1.15), bodyMats[i]);
-        box.position.set(0.86, -0.2, 0);
-        pivot.add(box);
-        const plate = new THREE.Mesh(new THREE.PlaneGeometry(1.74, 0.4), new THREE.MeshBasicMaterial({ map: mTex }));
-        plate.position.set(0.86, -0.2, 0.59);
-        pivot.add(plate);
-        const nail = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.1, 8), nailMat);
-        nail.rotation.x = Math.PI / 2;
-        pivot.add(nail);
-        group.add(pivot);
-      } else if (marqueeStyle === 3) {
-        // Snapped through the middle; both halves droop from their outer nails.
-        for (const side of [-1, 1] as const) {
-          const pivot = new THREE.Group();
-          pivot.position.set(0.9 * side, 4.52, 0);
-          pivot.rotation.z = 0.26 * side;
-          const box = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.52, 1.15), bodyMats[i]);
-          box.position.set(-0.46 * side, -0.08, 0);
-          pivot.add(box);
-          const half = mTex.clone();
-          half.repeat.set(0.5, 1);
-          half.offset.set(side === -1 ? 0 : 0.5, 0);
-          half.needsUpdate = true;
-          const plate = new THREE.Mesh(new THREE.PlaneGeometry(0.84, 0.4), new THREE.MeshBasicMaterial({ map: half }));
-          plate.position.set(-0.46 * side, -0.08, 0.59);
-          pivot.add(plate);
-          const nail = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.1, 8), nailMat);
-          nail.rotation.x = Math.PI / 2;
-          pivot.add(nail);
-          group.add(pivot);
-        }
-      } else {
-        const marqueeBox = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.52, 1.15), bodyMats[i]);
-        marqueeBox.position.set(0, 4.35, 0);
-        group.add(marqueeBox);
-        const marquee = new THREE.Mesh(
-          new THREE.PlaneGeometry(1.74, 0.4),
-          new THREE.MeshBasicMaterial({ map: mTex }),
-        );
-        marquee.position.set(0, 4.35, 0.59);
-        group.add(marquee);
-      }
+      const marqueeBox = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.52, 1.15), bodyMats[i]);
+      marqueeBox.position.set(0, 4.35, 0);
+      group.add(marqueeBox);
+      const marquee = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.74, 0.4),
+        new THREE.MeshBasicMaterial({ map: mTex }),
+      );
+      marquee.position.set(0, 4.35, 0.59);
+      group.add(marquee);
       group.userData.drawMarquee = drawMarquee;
       group.userData.mTex = mTex;
-      group.userData.marqueeStyle = marqueeStyle;
+      group.userData.tickerStyle = tickerStyle;
 
       // LED ticker bridging the gap between marquee and screen: a hot strip
       // of crawling arcade nonsense so the shell never reads as empty.
@@ -563,12 +496,34 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
       tickerTex.colorSpace = THREE.SRGBColorSpace;
       tickerTex.wrapS = THREE.RepeatWrapping;
       const tickerMat = new THREE.MeshBasicMaterial({ map: tickerTex, transparent: true, opacity: 0.06 });
-      const tickerFrame = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.24, 0.05), bezelMat);
-      tickerFrame.position.set(0, 3.6, 0.655);
-      group.add(tickerFrame);
-      const ticker = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.17), tickerMat);
-      ticker.position.set(0, 3.6, 0.685);
-      group.add(ticker);
+      if (tickerStyle === 3) tickerMat.color.set(0xff9584);
+      if (tickerStyle === 2) {
+        // The LED bar hangs from its last screw, still crawling.
+        const tPivot = new THREE.Group();
+        tPivot.position.set(-0.78, 3.68, 0);
+        tPivot.rotation.z = -0.13;
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.24, 0.05), bezelMat);
+        frame.position.set(0.78, -0.08, 0.655);
+        tPivot.add(frame);
+        const plate = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.17), tickerMat);
+        plate.position.set(0.78, -0.08, 0.685);
+        tPivot.add(plate);
+        const screw = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.018, 0.018, 0.08, 8),
+          new THREE.MeshStandardMaterial({ color: 0x39413c, roughness: 0.4 }),
+        );
+        screw.rotation.x = Math.PI / 2;
+        screw.position.z = 0.66;
+        tPivot.add(screw);
+        group.add(tPivot);
+      } else {
+        const tickerFrame = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.24, 0.05), bezelMat);
+        tickerFrame.position.set(0, 3.6, 0.655);
+        group.add(tickerFrame);
+        const ticker = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.17), tickerMat);
+        ticker.position.set(0, 3.6, 0.685);
+        group.add(ticker);
+      }
       // Status lamps flanking the ticker, blinking out of phase.
       const lampMats: THREE.MeshBasicMaterial[] = [];
       for (const [lx, lc] of [[-0.72, 0xff4a3a], [0.72, 0x3dff8c]] as const) {
@@ -1305,11 +1260,9 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
         if (!cab.powered && t >= cab.powerAt) {
           cab.powered = true;
           sfx.powerOn(i);
-          if ((cab.group.userData.marqueeStyle as number) < 2) {
-            cab.marqueeLit = true;
-            (cab.group.userData.drawMarquee as (lit: boolean) => void)(true);
-            (cab.group.userData.mTex as THREE.CanvasTexture).needsUpdate = true;
-          }
+          cab.marqueeLit = true;
+          (cab.group.userData.drawMarquee as (lit: boolean) => void)(true);
+          (cab.group.userData.mTex as THREE.CanvasTexture).needsUpdate = true;
         }
         const sel = selectedRef.current === i;
         const target = cab.powered ? (cab.hovered || sel ? 6.5 : 3.2) : 0;
@@ -1331,19 +1284,16 @@ export default function ArcadeScene({ className, screens, selected, onSelect }: 
         for (const m of cab.edgeMats) m.opacity = 0.9 * on * flickN * hotness * (rattling && Math.random() < 0.4 ? 0.25 : 1);
         cab.heatMat.opacity = 0.16 * on * flickN * (cab.hovered || sel ? 1.6 : 1);
 
-        // Sign no. 2 is dying: it drops out and catches again at random.
-        if (cab.powered && (cab.group.userData.marqueeStyle as number) === 1) {
-          const litNow = Math.sin(t * 12.7 + i) * Math.sin(t * 3.1 + 1.7) > -0.72;
-          if (litNow !== cab.marqueeLit) {
-            cab.marqueeLit = litNow;
-            (cab.group.userData.drawMarquee as (lit: boolean) => void)(litNow);
-            (cab.group.userData.mTex as THREE.CanvasTexture).needsUpdate = true;
-          }
+        // Each LED ticker breaks its own way: 1 drops out, 3 runs garbled.
+        const tStyle = cab.group.userData.tickerStyle as number;
+        if (tStyle === 3) {
+          cab.tickerTex.offset.x = (t * 0.075 + (Math.sin(t * 9) > 0.7 ? Math.random() * 0.2 : 0)) % 1;
+          cab.tickerMat.opacity = cab.powered ? 0.4 * flickN : 0.06;
+        } else {
+          cab.tickerTex.offset.x = (t * 0.075 + i * 0.23) % 1;
+          const dropout = tStyle === 1 && Math.sin(t * 11.3) * Math.sin(t * 2.9 + 1.2) < -0.68 ? 0.05 : 1;
+          cab.tickerMat.opacity = cab.powered ? 0.9 * flickN * dropout : 0.06;
         }
-
-        // Ticker crawls; lamps blink out of phase; both die with the power.
-        cab.tickerTex.offset.x = (t * 0.075 + i * 0.23) % 1;
-        cab.tickerMat.opacity = cab.powered ? 0.9 * flickN : 0.06;
         cab.lampMats.forEach((m, k) => {
           m.opacity = cab.powered ? (Math.sin(t * 5.2 + k * Math.PI + i * 1.4) > 0 ? 0.95 : 0.14) : 0.1;
         });
